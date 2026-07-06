@@ -135,6 +135,7 @@ function loadUserState(id) {
   workouts = Array.isArray(data.workouts) ? data.workouts : [];
   bookmarks = Array.isArray(data.bookmarks) ? data.bookmarks : [];
   bodyPhoto = DB.getRaw(K.userPhoto(id)); // 文字列 or null
+  migrateMeals(); // 旧フォーマットの食事を新モデルへ
 }
 
 function clearUserState() {
@@ -179,6 +180,7 @@ function showScreen(screenId) {
   });
 
   if (screenId === "homeScreen") renderHome();
+  if (screenId === "mealScreen") renderMeals();
   if (screenId === "dashboardScreen") renderDashboard();
   if (screenId === "settingsScreen") renderSettings();
   if (screenId === "communityScreen") renderPosts();
@@ -578,59 +580,463 @@ function renderHome() {
 }
 
 // ======================================================
-// 食事管理
+// 食事管理（あすけん風：スロット別・食品DB・カロリー/PFC 収支）
 // ======================================================
 
-function setupMealForm() {
-  document.getElementById("addMealButton").addEventListener("click", () => {
-    const meal = {
-      id: Date.now(),
-      date: val("mealDate"),
-      name: val("mealName"),
-      calories: Number(val("mealCalories")),
-      protein: Number(val("mealProtein")),
-      memo: val("mealMemo"),
+// 食事スロット（朝・昼・夕・間食）
+const MEAL_SLOTS = [
+  { key: "breakfast", label: "朝食" },
+  { key: "lunch", label: "昼食" },
+  { key: "dinner", label: "夕食" },
+  { key: "snack", label: "間食" },
+];
+const SLOT_LABEL = MEAL_SLOTS.reduce((a, s) => ((a[s.key] = s.label), a), {});
+
+// 食品データベース：1食あたりの目安（cal / P / F / C）
+const FOODS = [
+  { name: "ご飯 (白ごはん 100g)", cat: "主食", unit: "杯", cal: 156, p: 2.5, f: 0.3, c: 37.1 },
+  { name: "ご飯 (白ごはん 150g)", cat: "主食", unit: "杯", cal: 234, p: 3.8, f: 0.5, c: 55.7 },
+  { name: "ご飯 (白ごはん 200g)", cat: "主食", unit: "杯", cal: 312, p: 5.0, f: 0.6, c: 74.2 },
+  { name: "玄米ご飯 (150g)", cat: "主食", unit: "杯", cal: 228, p: 4.2, f: 1.5, c: 51.3 },
+  { name: "食パン (6枚切り1枚)", cat: "主食", unit: "枚", cal: 149, p: 5.3, f: 2.5, c: 26.6 },
+  { name: "うどん (1玉)", cat: "主食", unit: "玉", cal: 242, p: 6.0, f: 0.9, c: 52.0 },
+  { name: "パスタ (乾麺100g)", cat: "主食", unit: "皿", cal: 347, p: 12.9, f: 1.8, c: 66.9 },
+  { name: "そば (1玉)", cat: "主食", unit: "玉", cal: 296, p: 9.6, f: 1.9, c: 57.0 },
+  { name: "おにぎり (鮭)", cat: "主食", unit: "個", cal: 180, p: 4.5, f: 1.5, c: 36.0 },
+  { name: "オートミール (40g)", cat: "主食", unit: "食", cal: 152, p: 5.5, f: 2.3, c: 27.6 },
+  { name: "鶏むね肉 (皮なし100g)", cat: "主菜", unit: "食", cal: 108, p: 22.3, f: 1.5, c: 0.0 },
+  { name: "鶏もも肉 (皮なし100g)", cat: "主菜", unit: "食", cal: 116, p: 18.8, f: 3.9, c: 0.0 },
+  { name: "サラダチキン (1個)", cat: "主菜", unit: "個", cal: 114, p: 24.0, f: 1.5, c: 1.0 },
+  { name: "卵 (Mサイズ1個)", cat: "主菜", unit: "個", cal: 76, p: 6.2, f: 5.2, c: 0.2 },
+  { name: "納豆 (1パック)", cat: "主菜", unit: "個", cal: 100, p: 8.3, f: 5.0, c: 6.0 },
+  { name: "鮭 (1切れ)", cat: "主菜", unit: "切れ", cal: 133, p: 22.3, f: 4.1, c: 0.1 },
+  { name: "さば (1切れ)", cat: "主菜", unit: "切れ", cal: 211, p: 20.7, f: 12.1, c: 0.3 },
+  { name: "豚ロース (100g)", cat: "主菜", unit: "食", cal: 263, p: 19.3, f: 19.2, c: 0.2 },
+  { name: "牛赤身 (100g)", cat: "主菜", unit: "食", cal: 182, p: 21.2, f: 9.6, c: 0.3 },
+  { name: "木綿豆腐 (半丁150g)", cat: "主菜", unit: "食", cal: 110, p: 9.9, f: 6.3, c: 1.8 },
+  { name: "ツナ缶 (水煮1缶)", cat: "主菜", unit: "缶", cal: 71, p: 16.0, f: 0.7, c: 0.2 },
+  { name: "プロテイン (1杯)", cat: "主菜", unit: "杯", cal: 120, p: 24.0, f: 1.5, c: 3.0 },
+  { name: "サラダ (グリーン)", cat: "副菜", unit: "皿", cal: 40, p: 1.5, f: 2.5, c: 3.5 },
+  { name: "ブロッコリー (100g)", cat: "副菜", unit: "食", cal: 37, p: 4.3, f: 0.5, c: 5.2 },
+  { name: "ほうれん草おひたし", cat: "副菜", unit: "皿", cal: 25, p: 2.5, f: 0.4, c: 2.0 },
+  { name: "きんぴらごぼう", cat: "副菜", unit: "皿", cal: 90, p: 1.8, f: 4.5, c: 11.0 },
+  { name: "キムチ (50g)", cat: "副菜", unit: "食", cal: 23, p: 1.3, f: 0.1, c: 4.0 },
+  { name: "味噌汁 (豆腐・わかめ)", cat: "汁物", unit: "杯", cal: 40, p: 3.0, f: 1.5, c: 4.0 },
+  { name: "豚汁", cat: "汁物", unit: "杯", cal: 130, p: 6.0, f: 6.5, c: 12.0 },
+  { name: "牛乳 (200ml)", cat: "乳製品", unit: "杯", cal: 134, p: 6.6, f: 7.6, c: 9.6 },
+  { name: "ヨーグルト (無糖100g)", cat: "乳製品", unit: "個", cal: 62, p: 3.6, f: 3.0, c: 4.9 },
+  { name: "ギリシャヨーグルト", cat: "乳製品", unit: "個", cal: 100, p: 10.0, f: 3.0, c: 6.0 },
+  { name: "6Pチーズ (1個)", cat: "乳製品", unit: "個", cal: 60, p: 3.6, f: 4.8, c: 0.4 },
+  { name: "バナナ (1本)", cat: "果物", unit: "本", cal: 86, p: 1.1, f: 0.2, c: 22.5 },
+  { name: "りんご (1/2個)", cat: "果物", unit: "個", cal: 76, p: 0.2, f: 0.2, c: 20.0 },
+  { name: "ブルーベリー (50g)", cat: "果物", unit: "食", cal: 25, p: 0.3, f: 0.1, c: 6.0 },
+  { name: "プロテインバー (1本)", cat: "間食", unit: "本", cal: 200, p: 15.0, f: 8.5, c: 20.0 },
+  { name: "アーモンド (25g)", cat: "間食", unit: "食", cal: 152, p: 5.0, f: 13.0, c: 5.0 },
+  { name: "ダークチョコ (20g)", cat: "間食", unit: "食", cal: 112, p: 1.5, f: 8.0, c: 8.0 },
+  { name: "ポテトチップス (60g)", cat: "間食", unit: "袋", cal: 336, p: 3.0, f: 21.0, c: 33.0 },
+  { name: "ブラックコーヒー", cat: "飲料", unit: "杯", cal: 8, p: 0.2, f: 0.0, c: 1.4 },
+  { name: "オレンジジュース (200ml)", cat: "飲料", unit: "杯", cal: 84, p: 1.4, f: 0.2, c: 20.0 },
+  { name: "スポーツドリンク (500ml)", cat: "飲料", unit: "本", cal: 105, p: 0.0, f: 0.0, c: 26.0 },
+  { name: "牛丼 (並)", cat: "外食", unit: "杯", cal: 635, p: 20.0, f: 20.0, c: 92.0 },
+  { name: "ラーメン (醤油)", cat: "外食", unit: "杯", cal: 500, p: 20.0, f: 15.0, c: 70.0 },
+  { name: "ハンバーグ定食", cat: "外食", unit: "食", cal: 750, p: 30.0, f: 40.0, c: 60.0 },
+];
+const FOOD_CATS = ["すべて", "主食", "主菜", "副菜", "汁物", "乳製品", "果物", "間食", "飲料", "外食"];
+
+let foodModalSlot = "breakfast";
+let foodModalCat = "すべて";
+let foodModalQuery = "";
+
+// 旧フォーマットの食事（{calories, protein}）を新モデルへ変換
+function migrateMeals() {
+  meals = (meals || []).map((m) => {
+    if (m.slot && m.cal != null && m.qty != null) return m; // すでに新モデル
+    return {
+      id: m.id || Date.now() + Math.floor(Math.random() * 1000),
+      date: m.date || "",
+      slot: m.slot || "snack",
+      name: m.name || "",
+      cal: Number(m.cal != null ? m.cal : m.calories) || 0,
+      p: Number(m.p != null ? m.p : m.protein) || 0,
+      f: Number(m.f) || 0,
+      c: Number(m.c) || 0,
+      unit: m.unit || "",
+      qty: Number(m.qty) || 1,
     };
-
-    if (!meal.date || !meal.name || !meal.calories) {
-      alert("日付・食事内容・摂取カロリーを入力してください。");
-      return;
-    }
-
-    meals.unshift(meal);
-    saveState();
-
-    setVal("mealName", "");
-    setVal("mealCalories", "");
-    setVal("mealProtein", "");
-    setVal("mealMemo", "");
-
-    renderMeals();
-    alert("食事を保存しました。");
   });
 }
 
+// ---- 目標カロリー / PFC（プロフィールから自動計算：Mifflin-St Jeor）----
+function activityFactor() {
+  return 1.55; // 中程度の活動量（プロトタイプ既定値）
+}
+function goalType() {
+  if (selectedIdeal && selectedIdeal.type) return selectedIdeal.type;
+  const g = (profile && profile.goal) || "";
+  if (g.indexOf("落と") >= 0 || g.indexOf("引き締") >= 0) return "cut";
+  if (g.indexOf("増や") >= 0 || g.indexOf("大き") >= 0) return "bulk";
+  return "maintain";
+}
+function computeTargets() {
+  if (!profile) return null;
+  const w = Number(profile.weight) || 0;
+  const h = Number(profile.height) || 0;
+  const a = Number(profile.age) || 0;
+  if (!w || !h || !a) return null;
+  const offset = profile.gender === "男性" ? 5 : profile.gender === "女性" ? -161 : -78;
+  const bmr = 10 * w + 6.25 * h - 5 * a + offset;
+  const tdee = bmr * activityFactor();
+  const gt = goalType();
+  const adj = gt === "cut" ? 0.82 : gt === "bulk" ? 1.12 : 1.0;
+  const cal = Math.max(1200, Math.round((tdee * adj) / 10) * 10);
+  const pPerKg = gt === "cut" ? 2.2 : gt === "bulk" ? 2.0 : 1.6;
+  const p = Math.round(w * pPerKg);
+  const f = Math.round((cal * 0.25) / 9);
+  const c = Math.max(0, Math.round((cal - p * 4 - f * 9) / 4));
+  return { cal, p, f, c, goalType: gt };
+}
+
+// ---- 集計ヘルパー ----
+function todayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+function mealDateVal() {
+  return val("mealDate") || todayStr();
+}
+function round1(n) {
+  return Math.round((Number(n) || 0) * 10) / 10;
+}
+function itemCal(m) {
+  return Math.round((Number(m.cal) || 0) * (Number(m.qty) || 1));
+}
+function itemMacro(m, k) {
+  return (Number(m[k]) || 0) * (Number(m.qty) || 1);
+}
+function slotMeals(date, slot) {
+  return meals.filter((m) => m.date === date && m.slot === slot);
+}
+function dayTotals(date) {
+  return meals
+    .filter((m) => m.date === date)
+    .reduce(
+      (t, m) => {
+        t.cal += itemCal(m);
+        t.p += itemMacro(m, "p");
+        t.f += itemMacro(m, "f");
+        t.c += itemMacro(m, "c");
+        return t;
+      },
+      { cal: 0, p: 0, f: 0, c: 0 }
+    );
+}
+
+// 既存の呼び出し元（hydrateForApp / renderDashboard / showScreen）が使う統合レンダラ
 function renderMeals() {
-  const latest = document.getElementById("latestMeals");
-  const dashboard = document.getElementById("dashboardMeals");
+  renderCalorieSummary();
+  renderMealSlots();
+  renderDashboardMeals();
+}
 
-  const html =
-    meals.length === 0
-      ? `<p class="lead">食事記録はまだありません。</p>`
-      : meals
+function renderCalorieSummary() {
+  const totalEl = document.getElementById("caloTotal");
+  if (!totalEl) return;
+  const totals = dayTotals(mealDateVal());
+  const targets = computeTargets();
+
+  totalEl.textContent = totals.cal;
+  document.getElementById("caloGoal").textContent = targets ? targets.cal : "—";
+
+  const fillEl = document.getElementById("caloBarFill");
+  const statusEl = document.getElementById("caloStatus");
+  if (targets) {
+    const pct = Math.min(100, Math.round((totals.cal / targets.cal) * 100));
+    fillEl.style.width = pct + "%";
+    const over = totals.cal > targets.cal;
+    fillEl.classList.toggle("over", over);
+    const diff = Math.abs(targets.cal - totals.cal);
+    statusEl.innerHTML = over
+      ? `目標より <strong>${diff}</strong> kcal オーバー`
+      : `目標まで あと <strong>${diff}</strong> kcal（不足）`;
+    statusEl.classList.toggle("over", over);
+  } else {
+    fillEl.style.width = "0%";
+    statusEl.textContent = "プロフィールを登録すると、目標カロリーを自動計算します。";
+    statusEl.classList.remove("over");
+  }
+  renderPfc(totals, targets);
+}
+
+function renderPfc(totals, targets) {
+  const grid = document.getElementById("pfcGrid");
+  if (!grid) return;
+  const rows = [
+    { name: "P たんぱく質", cls: "p", cur: Math.round(totals.p), tgt: targets ? targets.p : null },
+    { name: "F 脂質", cls: "f", cur: Math.round(totals.f), tgt: targets ? targets.f : null },
+    { name: "C 炭水化物", cls: "c", cur: Math.round(totals.c), tgt: targets ? targets.c : null },
+  ];
+  grid.innerHTML = rows
+    .map((r) => {
+      const pct = r.tgt ? Math.min(100, Math.round((r.cur / r.tgt) * 100)) : 0;
+      const label = r.tgt != null ? `${r.cur} / ${r.tgt} g` : `${r.cur} g`;
+      return `
+      <div class="pfc-row">
+        <div class="pfc-top"><span class="pfc-name">${r.name}</span><span class="pfc-val">${label}</span></div>
+        <div class="pfc-bar"><span class="pfc-fill ${r.cls}" style="width:${pct}%"></span></div>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderMealSlots() {
+  const wrap = document.getElementById("mealSlots");
+  if (!wrap) return;
+  const date = mealDateVal();
+
+  wrap.innerHTML = MEAL_SLOTS.map((slot) => {
+    const items = slotMeals(date, slot.key);
+    const slotCal = items.reduce((s, m) => s + itemCal(m), 0);
+
+    const itemsHtml = items.length
+      ? items
           .map(
-            (meal) => `
-      <div class="list-item">
-        <strong>${escapeHtml(meal.date)} / ${escapeHtml(meal.name)}</strong>
-        <div class="meta">${Number(meal.calories) || 0}kcal / タンパク質 ${Number(meal.protein) || 0}g</div>
-        <p>${escapeHtml(meal.memo || "メモなし")}</p>
-      </div>
-    `
+            (m) => `
+        <div class="meal-item">
+          <div class="mi-main">
+            <span class="mi-name">${escapeHtml(m.name)}</span>
+            <span class="mi-macros">P ${round1(itemMacro(m, "p"))} ・ F ${round1(itemMacro(m, "f"))} ・ C ${round1(itemMacro(m, "c"))} g</span>
+          </div>
+          <div class="mi-qty">
+            <button class="qty-btn" data-qty="dec" data-mid="${m.id}" aria-label="減らす">−</button>
+            <span class="qty-val">${m.qty}${escapeHtml(m.unit || "")}</span>
+            <button class="qty-btn" data-qty="inc" data-mid="${m.id}" aria-label="増やす">＋</button>
+          </div>
+          <span class="mi-cal">${itemCal(m)}<small>kcal</small></span>
+          <button class="mi-del" data-del="${m.id}" aria-label="削除"><svg class="icon"><use href="#i-trash" /></svg></button>
+        </div>`
           )
-          .join("");
+          .join("")
+      : `<p class="slot-empty">まだ記録がありません。</p>`;
 
-  if (latest) latest.innerHTML = html;
-  if (dashboard) dashboard.innerHTML = html;
+    return `
+    <div class="panel meal-slot">
+      <div class="slot-head">
+        <span class="slot-name">${slot.label}</span>
+        <span class="slot-cal">${slotCal}<small>kcal</small></span>
+      </div>
+      <div class="slot-items">${itemsHtml}</div>
+      <button class="slot-add" data-add-food="${slot.key}"><svg class="icon"><use href="#i-plus" /></svg>食品を追加</button>
+    </div>`;
+  }).join("");
+}
+
+function renderDashboardMeals() {
+  const box = document.getElementById("dashboardMeals");
+  if (!box) return;
+  if (!meals.length) {
+    box.innerHTML = `<p class="lead">食事記録はまだありません。</p>`;
+    return;
+  }
+  const sorted = [...meals].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  box.innerHTML = sorted
+    .slice(0, 40)
+    .map(
+      (m) => `
+    <div class="list-item">
+      <strong>${escapeHtml(m.date)} ・ ${escapeHtml(SLOT_LABEL[m.slot] || "食事")} / ${escapeHtml(m.name)}</strong>
+      <div class="meta">${itemCal(m)}kcal ・ P${round1(itemMacro(m, "p"))} F${round1(itemMacro(m, "f"))} C${round1(itemMacro(m, "c"))}g ・ ×${m.qty}</div>
+    </div>`
+    )
+    .join("");
+}
+
+// ---- 食品検索モーダル ----
+function openFoodModal(slotKey) {
+  foodModalSlot = slotKey;
+  foodModalCat = "すべて";
+  foodModalQuery = "";
+  const title = document.getElementById("foodModalTitle");
+  if (title) title.textContent = `${SLOT_LABEL[slotKey]}に食品を追加`;
+  setVal("foodSearch", "");
+  renderFoodCats();
+  renderFoodResults();
+  const modal = document.getElementById("foodModal");
+  if (modal) modal.hidden = false;
+  document.body.classList.add("modal-open");
+  const s = document.getElementById("foodSearch");
+  if (s) setTimeout(() => s.focus(), 60);
+}
+function closeFoodModal() {
+  const modal = document.getElementById("foodModal");
+  if (modal) modal.hidden = true;
+  if (!document.querySelector(".ex-modal:not([hidden])")) document.body.classList.remove("modal-open");
+}
+function renderFoodCats() {
+  const box = document.getElementById("foodCats");
+  if (!box) return;
+  box.innerHTML = FOOD_CATS.map(
+    (c) => `<button type="button" class="food-cat${c === foodModalCat ? " active" : ""}" data-food-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+  ).join("");
+}
+function filteredFoods() {
+  const q = foodModalQuery.trim();
+  return FOODS.filter((f) => {
+    const catOk = foodModalCat === "すべて" || f.cat === foodModalCat;
+    const qOk = !q || f.name.indexOf(q) >= 0 || f.cat.indexOf(q) >= 0;
+    return catOk && qOk;
+  });
+}
+function renderFoodResults() {
+  const box = document.getElementById("foodResults");
+  if (!box) return;
+  const list = filteredFoods();
+  if (!list.length) {
+    box.innerHTML = `<p class="slot-empty">該当する食品がありません。下の手入力から追加できます。</p>`;
+    return;
+  }
+  const inSlot = new Set(slotMeals(mealDateVal(), foodModalSlot).map((m) => m.name));
+  box.innerHTML = list
+    .map((f) => {
+      const idx = FOODS.indexOf(f);
+      const added = inSlot.has(f.name);
+      return `
+    <button type="button" class="food-row${added ? " added" : ""}" data-food-idx="${idx}">
+      <span class="fr-main">
+        <span class="fr-name">${escapeHtml(f.name)}</span>
+        <span class="fr-sub">${escapeHtml(f.cat)} ・ P${f.p} F${f.f} C${f.c}</span>
+      </span>
+      <span class="fr-cal">${f.cal}<small>kcal</small></span>
+      <span class="fr-add"><svg class="icon"><use href="#i-${added ? "check" : "plus"}" /></svg></span>
+    </button>`;
+    })
+    .join("");
+}
+function addFoodToSlot(food) {
+  const date = mealDateVal();
+  const existing = meals.find((m) => m.date === date && m.slot === foodModalSlot && m.name === food.name);
+  if (existing) {
+    existing.qty = (Number(existing.qty) || 1) + 1;
+  } else {
+    meals.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      date,
+      slot: foodModalSlot,
+      name: food.name,
+      cal: Number(food.cal) || 0,
+      p: Number(food.p) || 0,
+      f: Number(food.f) || 0,
+      c: Number(food.c) || 0,
+      unit: food.unit || "",
+      qty: 1,
+    });
+  }
+  saveState();
+  renderFoodResults();
+  renderMealSlots();
+  renderCalorieSummary();
+}
+function addCustomFood() {
+  const name = val("customFoodName").trim();
+  const cal = Number(val("customFoodCal"));
+  if (!name || !cal) {
+    alert("食品名とカロリーを入力してください。");
+    return;
+  }
+  addFoodToSlot({
+    name,
+    cal,
+    p: Number(val("customFoodP")) || 0,
+    f: Number(val("customFoodF")) || 0,
+    c: Number(val("customFoodC")) || 0,
+    unit: "",
+  });
+  ["customFoodName", "customFoodCal", "customFoodP", "customFoodF", "customFoodC"].forEach((id) => setVal(id, ""));
+}
+function changeMealQty(id, delta) {
+  const m = meals.find((x) => String(x.id) === String(id));
+  if (!m) return;
+  const next = (Number(m.qty) || 1) + delta;
+  if (next < 1) meals = meals.filter((x) => String(x.id) !== String(id));
+  else m.qty = next;
+  saveState();
+  renderMeals();
+}
+function removeMeal(id) {
+  meals = meals.filter((x) => String(x.id) !== String(id));
+  saveState();
+  renderMeals();
+}
+function shiftMealDate(delta) {
+  const input = document.getElementById("mealDate");
+  if (!input) return;
+  const d = new Date((input.value || todayStr()) + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  input.value = d.toISOString().split("T")[0];
+  renderMeals();
+}
+
+function setupMealScreen() {
+  const dateInput = document.getElementById("mealDate");
+  if (dateInput) dateInput.addEventListener("change", renderMeals);
+  const prev = document.getElementById("mealPrevDay");
+  const next = document.getElementById("mealNextDay");
+  if (prev) prev.addEventListener("click", () => shiftMealDate(-1));
+  if (next) next.addEventListener("click", () => shiftMealDate(1));
+
+  // 摂取カロリー / PFC タブ
+  document.querySelectorAll("[data-calotab]").forEach((t) => {
+    t.addEventListener("click", () => {
+      document.querySelectorAll("[data-calotab]").forEach((x) => x.classList.toggle("active", x === t));
+      document.querySelectorAll("[data-caloview]").forEach((v) => {
+        v.hidden = v.getAttribute("data-caloview") !== t.dataset.calotab;
+      });
+    });
+  });
+
+  // スロットの操作（イベント委譲）
+  const slots = document.getElementById("mealSlots");
+  if (slots) {
+    slots.addEventListener("click", (e) => {
+      const addBtn = e.target.closest("[data-add-food]");
+      if (addBtn) return openFoodModal(addBtn.dataset.addFood);
+      const qBtn = e.target.closest("[data-qty]");
+      if (qBtn) return changeMealQty(qBtn.dataset.mid, qBtn.dataset.qty === "inc" ? 1 : -1);
+      const delBtn = e.target.closest("[data-del]");
+      if (delBtn) return removeMeal(delBtn.dataset.del);
+    });
+  }
+
+  // 食品検索モーダル
+  const search = document.getElementById("foodSearch");
+  if (search) search.addEventListener("input", () => { foodModalQuery = search.value; renderFoodResults(); });
+  const cats = document.getElementById("foodCats");
+  if (cats) {
+    cats.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-food-cat]");
+      if (!b) return;
+      foodModalCat = b.dataset.foodCat;
+      renderFoodCats();
+      renderFoodResults();
+    });
+  }
+  const results = document.getElementById("foodResults");
+  if (results) {
+    results.addEventListener("click", (e) => {
+      const row = e.target.closest("[data-food-idx]");
+      if (!row) return;
+      const food = FOODS[Number(row.dataset.foodIdx)];
+      if (food) addFoodToSlot(food);
+    });
+  }
+  const customBtn = document.getElementById("customFoodAdd");
+  if (customBtn) customBtn.addEventListener("click", addCustomFood);
+
+  const closeBtn = document.getElementById("foodModalClose");
+  if (closeBtn) closeBtn.addEventListener("click", closeFoodModal);
+  const backdrop = document.querySelector("#foodModal .ex-modal-backdrop");
+  if (backdrop) backdrop.addEventListener("click", closeFoodModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !document.getElementById("foodModal").hidden) closeFoodModal();
+  });
 }
 
 // ======================================================
@@ -1034,46 +1440,42 @@ function renderDashboard() {
 
 function setupFeedback() {
   document.getElementById("generateFeedbackButton").addEventListener("click", () => {
-    const latestMeal = meals[0];
+    const date = todayStr();
+    const totals = dayTotals(date);
+    const targets = computeTargets();
     const latestWorkout = workouts[0];
 
     let feedback = "【今日の簡易フィードバック】\n\n";
-
     if (profile) feedback += `目標：${profile.goal}\n`;
-    if (selectedIdeal) feedback += `理想体型：${selectedIdeal.label}\n\n`;
+    if (selectedIdeal) feedback += `理想体型：${selectedIdeal.label}\n`;
+    if (targets) feedback += `目標カロリー：${targets.cal}kcal（P${targets.p} / F${targets.f} / C${targets.c}g）\n`;
+    feedback += "\n";
 
-    if (!latestMeal && !latestWorkout) {
-      feedback += "まだ記録がありません。まずは食事または筋トレを1つ記録してみましょう。";
-      document.getElementById("feedbackBox").textContent = feedback;
-      return;
-    }
-
-    if (latestMeal) {
-      feedback += `食事：${latestMeal.name}を記録できています。\n`;
-      if (latestMeal.protein >= 80) {
-        feedback += "タンパク質量は良い意識ができています。\n";
-      } else {
-        feedback += "タンパク質が少なめの場合は、卵・鶏肉・魚・豆腐などを追加すると良いです。\n";
-      }
+    if (totals.cal === 0) {
+      feedback += "食事：今日の記録がまだありません。まずは1品、朝食から記録してみましょう。\n";
     } else {
-      feedback += "食事記録がないため、まずは摂取カロリーだけでも記録しましょう。\n";
+      feedback += `食事：今日は ${totals.cal}kcal（P${Math.round(totals.p)} / F${Math.round(totals.f)} / C${Math.round(totals.c)}g）を記録できています。\n`;
+      if (targets) {
+        const diff = targets.cal - totals.cal;
+        if (diff > 300) feedback += `目標まであと約${diff}kcal。エネルギー不足に注意し、あと1〜2品足すと良いです。\n`;
+        else if (diff < -300) feedback += `目標を約${-diff}kcal超えています。夜の間食を控えるなど微調整しましょう。\n`;
+        else feedback += "摂取カロリーは目標に近く、良いバランスです。\n";
+        if (totals.p < targets.p * 0.8) feedback += "タンパク質が目標より不足気味です。鶏むね・卵・プロテインなどを追加しましょう。\n";
+        else feedback += "タンパク質はしっかり摂れています。\n";
+      }
     }
 
     if (latestWorkout) {
-      feedback += `筋トレ：${latestWorkout.name}を記録できています。継続のために、重量・回数・セット数を残すのは良い習慣です。\n`;
+      feedback += `筋トレ：${latestWorkout.name}を記録できています。継続のために記録を残すのは良い習慣です。\n`;
     } else {
-      feedback += "筋トレ記録がないため、今日は1種目だけでも記録してみましょう。\n";
+      feedback += "筋トレ：記録がまだないため、今日は1種目だけでも記録してみましょう。\n";
     }
 
     feedback += "\n明日の行動目標：\n";
-
-    if (selectedIdeal?.type === "cut") {
-      feedback += "食事記録を継続し、摂取カロリーと歩数を意識しましょう。";
-    } else if (selectedIdeal?.type === "bulk") {
-      feedback += "筋トレ記録を継続し、タンパク質とトレーニング量を意識しましょう。";
-    } else {
-      feedback += "無理なく記録を続け、食事と運動のバランスを確認しましょう。";
-    }
+    const gt = goalType();
+    if (gt === "cut") feedback += "摂取カロリーを目標内に抑えつつ、タンパク質を確保しましょう。";
+    else if (gt === "bulk") feedback += "目標カロリーを下回らないよう食事を確保し、扱う重量を少しずつ伸ばしましょう。";
+    else feedback += "食事・運動のバランスを保ち、無理なく記録を継続しましょう。";
 
     document.getElementById("feedbackBox").textContent = feedback;
   });
@@ -1246,7 +1648,7 @@ function csvEscape(v) {
 function exportCsv() {
   const rows = [["type", "date", "name", "detail1", "detail2", "detail3", "memo"]];
   meals.forEach((m) => {
-    rows.push(["meal", m.date, m.name, `${Number(m.calories) || 0}kcal`, `protein ${Number(m.protein) || 0}g`, "", m.memo || ""]);
+    rows.push(["meal", m.date, `${SLOT_LABEL[m.slot] || ""} ${m.name}`.trim(), `${itemCal(m)}kcal`, `x${m.qty}`, `P${round1(itemMacro(m, "p"))} F${round1(itemMacro(m, "f"))} C${round1(itemMacro(m, "c"))}`, ""]);
   });
   workouts.forEach((w) => {
     if (w.kind === "c") {
@@ -1315,7 +1717,7 @@ function init() {
   setupProfileForm();
   setupPhotoUpload();
   setupIdealSelection();
-  setupMealForm();
+  setupMealScreen();
   setupExercisePicker();
   setupFeedback();
   setupCommunity();
