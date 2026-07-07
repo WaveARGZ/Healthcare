@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BodyMake Support — PHYSIQUE OS</title>
 
+  <!-- テーマを描画前に適用（ちらつき防止）: pop=ポップ / hud=クラシック -->
+  <script>
+    try { document.documentElement.dataset.theme = localStorage.getItem("bm_theme") || "pop"; }
+    catch (e) { document.documentElement.dataset.theme = "pop"; }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Mochiy+Pop+P+One&display=swap"
     rel="stylesheet"
   />
 
@@ -132,6 +138,9 @@
       </a>
 
       <div class="top-status">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="デザインを切り替え">
+          <span class="tt-emoji" id="themeEmoji">🎨</span><span class="tt-label" id="themeLabel">ポップ</span>
+        </button>
         <span class="status-chip ghost-chip">RESEARCH BUILD v0.4</span>
         <span class="status-chip authed-only"><span class="live-dot"></span>SESSION ACTIVE</span>
         <button class="account-chip authed-only" data-go="settingsScreen" aria-label="アカウント設定">

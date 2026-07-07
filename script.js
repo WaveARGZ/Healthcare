@@ -1705,11 +1705,36 @@ function setupSettings() {
 }
 
 // ======================================================
+// テーマ切り替え（pop=ポップ / hud=クラシック）
+// ======================================================
+
+function applyTheme(theme) {
+  const t = theme === "hud" ? "hud" : "pop";
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("bm_theme", t); } catch (e) {}
+  const label = document.getElementById("themeLabel");
+  const emoji = document.getElementById("themeEmoji");
+  if (label) label.textContent = t === "pop" ? "ポップ" : "クラシック";
+  if (emoji) emoji.textContent = t === "pop" ? "🎨" : "🖥️";
+}
+
+function setupThemeToggle() {
+  applyTheme(document.documentElement.dataset.theme || "pop");
+  const btn = document.getElementById("themeToggle");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "pop" ? "hud" : "pop");
+    });
+  }
+}
+
+// ======================================================
 // 初期化
 // ======================================================
 
 function init() {
   setupNavigationButtons();
+  setupThemeToggle();
   setTodayToDateInputs();
 
   setupAuth();

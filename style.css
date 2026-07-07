@@ -2126,3 +2126,141 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 560px) {
   .custom-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   テーマ切替ボタン（両テーマ共通・トークン追従）
+   ============================================================ */
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px 6px 10px;
+  border: 1px solid var(--cyan-line); border-radius: 999px; background: var(--cyan-soft); color: var(--cyan);
+  font-family: var(--font-display); font-weight: 600; font-size: 0.8rem;
+  transition: transform 0.14s ease, background 0.16s ease, border-color 0.16s ease;
+}
+.theme-toggle:hover { transform: translateY(-1px); background: var(--cyan-line); }
+.tt-emoji { font-size: 1rem; line-height: 1; }
+
+/* ============================================================
+   POP THEME — 明るく・丸く・カラフルに
+   :root[data-theme="pop"] でトークンを上書き＋HUD装飾を無効化
+   （data-theme が無い/"hud" のときは既存のクラシックデザイン）
+   ============================================================ */
+:root[data-theme="pop"] {
+  /* canvas & panels — 温かいクリーム */
+  --canvas: #fff7f2;
+  --panel: #ffffff;
+  --panel-2: #fff1ea;
+  --panel-3: #ffe6da;
+  --raise: #ffd7c6;
+
+  /* lines */
+  --line: #ffe2d5;
+  --line-2: #ffc9b5;
+  --hair: rgba(90, 50, 60, 0.08);
+
+  /* text — 温かいダークブラウン */
+  --ink: #40323a;
+  --ink-2: #74606b;
+  --muted: #a08c96;
+  --muted-2: #c7b4bd;
+
+  /* primary（--cyan系にマップ）= スイカ色コーラル */
+  --cyan: #ff5d73;
+  --cyan-bright: #ff8194;
+  --cyan-deep: #ec4b63;
+  --cyan-ink: #ffffff;
+  --cyan-glow: rgba(255, 93, 115, 0.35);
+  --cyan-soft: rgba(255, 93, 115, 0.12);
+  --cyan-line: rgba(255, 93, 115, 0.28);
+
+  /* secondary = サニーオレンジ */
+  --coral: #ff9f1c;
+  --coral-deep: #f08700;
+  --coral-soft: rgba(255, 159, 28, 0.15);
+  --coral-line: rgba(255, 159, 28, 0.34);
+
+  /* goal accents */
+  --cut: #2ec4b6;
+  --bulk: #ff6b6b;
+  --maintain: #4d9de0;
+
+  /* soft warm shadows */
+  --shadow: 0 16px 34px rgba(255, 120, 110, 0.20);
+  --shadow-sm: 0 8px 20px rgba(255, 120, 110, 0.14);
+  --ring-cyan: 0 0 0 3px var(--cyan-soft), 0 12px 26px rgba(255, 93, 115, 0.20);
+
+  /* chunky radii */
+  --r-lg: 24px;
+  --r-md: 18px;
+  --r-sm: 13px;
+  --r-xs: 9px;
+
+  /* rounded pop fonts */
+  --font-display: "M PLUS Rounded 1c", system-ui, sans-serif;
+  --font-body: "M PLUS Rounded 1c", system-ui, sans-serif;
+  --font-mono: "M PLUS Rounded 1c", system-ui, sans-serif;
+}
+
+/* cheerful multi-color background */
+:root[data-theme="pop"] body {
+  background:
+    radial-gradient(60% 45% at 100% -6%, rgba(255, 159, 28, 0.18), transparent 60%),
+    radial-gradient(55% 45% at -6% 4%, rgba(255, 93, 115, 0.16), transparent 58%),
+    radial-gradient(52% 42% at 50% 108%, rgba(77, 157, 224, 0.12), transparent 60%),
+    var(--canvas);
+}
+
+/* HUD装飾を無効化：グリッド背景・レティクル枠・数値グロー */
+[data-theme="pop"] .app-shell::before { display: none; }
+[data-theme="pop"] .reticle::before { display: none; }
+[data-theme="pop"] .summary-card strong,
+[data-theme="pop"] .summary-card.is-ideal strong,
+[data-theme="pop"] .calo-now strong { text-shadow: none; }
+
+/* トップバー / モバイル下タブは明るい半透明に */
+[data-theme="pop"] .topbar { background: rgba(255, 255, 255, 0.82); }
+
+/* 丸みを強調：ピル型ボタン & 丸い入力 */
+[data-theme="pop"] .primary-btn,
+[data-theme="pop"] .secondary-btn,
+[data-theme="pop"] .chip-btn,
+[data-theme="pop"] .small-btn,
+[data-theme="pop"] .select-ideal-btn,
+[data-theme="pop"] .seg-tab,
+[data-theme="pop"] .auth-tab,
+[data-theme="pop"] .food-cat,
+[data-theme="pop"] .ex-chip,
+[data-theme="pop"] .status-chip,
+[data-theme="pop"] .account-chip,
+[data-theme="pop"] .ghost-btn { border-radius: 999px; }
+[data-theme="pop"] .nav-btn { border-radius: 14px; }
+[data-theme="pop"] input,
+[data-theme="pop"] select,
+[data-theme="pop"] textarea { border-radius: 14px; }
+
+/* primaryボタン等のグローをコーラル系へ */
+[data-theme="pop"] .primary-btn { box-shadow: 0 8px 18px rgba(255, 93, 115, 0.30); }
+[data-theme="pop"] .primary-btn:hover { box-shadow: 0 12px 24px rgba(255, 93, 115, 0.40); }
+[data-theme="pop"] .brand-mark { box-shadow: 0 6px 14px rgba(255, 93, 115, 0.18); }
+[data-theme="pop"] .slot-add:hover { background: var(--cyan-soft); }
+
+/* ブランド名だけ思いきりポップなフォント */
+[data-theme="pop"] .brand-name {
+  font-family: "Mochiy Pop P One", "M PLUS Rounded 1c", sans-serif;
+  letter-spacing: 0;
+}
+
+/* ラベルの字間を少し詰めて可愛く */
+[data-theme="pop"] .eyebrow,
+[data-theme="pop"] .panel-label,
+[data-theme="pop"] .menu-tag,
+[data-theme="pop"] .brand-kicker,
+[data-theme="pop"] .rail-code,
+[data-theme="pop"] .foot-code { letter-spacing: 0.06em; }
+
+@media (max-width: 880px) {
+  [data-theme="pop"] .app-rail { background: rgba(255, 255, 255, 0.92); }
+}
+@media (max-width: 560px) {
+  .tt-label { display: none; }
+  .theme-toggle { padding: 8px; }
+}
