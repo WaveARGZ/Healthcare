@@ -1863,7 +1863,7 @@ input[type="checkbox"] {
 .ex-search input { width: 100%; padding: 11px 12px 11px 38px; margin-top: 0; }
 
 /* --- フィルタチップ --- */
-.ex-chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 6px; scrollbar-width: none; }
+.ex-chips { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding: 10px 2px 6px; scrollbar-width: none; }
 .ex-chips::-webkit-scrollbar { display: none; }
 .ex-chip {
   flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; cursor: pointer;
@@ -1890,7 +1890,7 @@ input[type="checkbox"] {
 .ex-list .ex-empty { padding: 18px 14px; }
 
 .ex-row {
-  display: grid; grid-template-columns: auto 34px 1fr auto auto auto;
+  display: grid; grid-template-columns: auto 34px minmax(0, 1fr) auto auto auto;
   gap: 10px; align-items: center; padding: 8px 10px;
   border-bottom: 1px solid var(--hair); cursor: pointer; transition: background 0.12s ease;
 }
@@ -1985,10 +1985,15 @@ body.modal-open { overflow: hidden; }
 
 /* --- レスポンシブ --- */
 @media (max-width: 880px) {
-  .workout-grid { grid-template-columns: 1fr; }
+  .workout-grid { grid-template-columns: minmax(0, 1fr); }
   .ex-list { max-height: 46vh; }
   .exm-fig svg { width: 56px; height: 112px; }
 }
+
+/* グリッドの子が min-content で溢れないよう縮小可能にする（横溢れ対策） */
+.content-grid > *,
+.workout-grid > * { min-width: 0; }
+.pend-inputs input { min-width: 0; }
 
 /* ============================================================
    食事管理（あすけん風） — スロット / カロリー・PFC収支 / 食品DB
@@ -2099,7 +2104,7 @@ body.modal-open { overflow: hidden; }
 .food-search-wrap { position: relative; margin-bottom: 14px; }
 .food-search-ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 1.1em; height: 1.1em; color: var(--muted); pointer-events: none; }
 #foodSearch { margin: 0; padding-left: 40px; }
-.food-cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
+.food-cats { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 8px; margin-bottom: 10px; }
 .food-cat {
   flex: none; padding: 7px 14px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); color: var(--ink-2);
   font-family: var(--font-display); font-weight: 600; font-size: 0.8rem; transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
