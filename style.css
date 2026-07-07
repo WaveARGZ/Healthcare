@@ -78,6 +78,7 @@ html {
   background: var(--canvas);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: clip; /* ルートでも横溢れ（左右スライド）を遮断。clipはstickyを壊さない */
 }
 
 body {
@@ -604,6 +605,7 @@ textarea {
   outline: none;
   font-weight: 500;
   font-size: 16px; /* iOSでフォーカス時に自動ズームされるのを防ぐ（16px未満で発生） */
+  min-width: 0; /* iOSのネイティブinput（date/search等）が固有幅で親を押し広げるのを防ぐ */
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
