@@ -76,11 +76,14 @@
 
 html {
   background: var(--canvas);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh; /* モバイルのアドレスバー開閉での高さジャンプを防ぐ */
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.7;
@@ -193,6 +196,7 @@ h3 {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -597,6 +601,7 @@ textarea {
   color: var(--ink);
   outline: none;
   font-weight: 500;
+  font-size: 16px; /* iOSでフォーカス時に自動ズームされるのを防ぐ（16px未満で発生） */
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
@@ -2408,4 +2413,25 @@ body.modal-open { overflow: hidden; }
 }
 @media (max-width: 560px) {
   .dash-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ============================================================
+   モバイル安定化：スクロール時の再描画チラつき・固定レイヤーのバグ対策
+   （iOS Safari の position:fixed＋mask / backdrop-filter が主因）
+   ============================================================ */
+@media (max-width: 880px) {
+  /* 固定のHUDグリッド（fixed＋mask）はスクロールで乱れるのでモバイルは非表示 */
+  .app-shell::before { display: none !important; }
+
+  /* backdrop-filter はモバイルのスクロールでチラつくため無効化し、不透明背景に */
+  .topbar {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--panel) !important;
+  }
+  .app-rail {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--panel) !important;
+  }
 }
