@@ -408,6 +408,31 @@
             <h2 id="welcomeTitle">今日も記録を始めましょう</h2>
           </div>
 
+          <!-- ホーム・テレメトリコンソール（直近7日の可視化） -->
+          <div class="panel console-panel">
+            <div class="panel-head">
+              <span class="panel-label">TELEMETRY // 直近7日コンソール</span>
+              <span class="dot"></span>
+            </div>
+            <div class="tele-stats" id="teleStats"></div>
+            <div class="tele-charts">
+              <div class="tele-chart">
+                <div class="tele-chart-head">
+                  <span class="tele-title"><svg class="icon"><use href="#i-flame" /></svg>摂取カロリー</span>
+                  <span class="tele-sub" id="teleCalSub">7日平均 —</span>
+                </div>
+                <div class="tele-plot" id="teleCalPlot"></div>
+              </div>
+              <div class="tele-chart">
+                <div class="tele-chart-head">
+                  <span class="tele-title"><svg class="icon"><use href="#i-dumbbell" /></svg>トレーニング量</span>
+                  <span class="tele-sub" id="teleVolSub">7日合計 —</span>
+                </div>
+                <div class="tele-plot" id="teleVolPlot"></div>
+              </div>
+            </div>
+          </div>
+
           <div class="home-top">
             <div class="panel intro-panel">
               <div class="panel-head"><span class="panel-label">TODAY // BRIEFING</span><svg class="icon panel-ico"><use href="#i-pulse" /></svg></div>

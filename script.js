@@ -577,6 +577,142 @@ function renderHome() {
   `;
 
   title.textContent = `${profile.goal}ために、今日の記録を始めましょう`;
+
+  renderHomeConsole();
+}
+
+// ======================================================
+// ホーム・テレメトリコンソール（直近7日の可視化）
+// ======================================================
+
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+
+function ymd(d) {
+  return d.toISOString().split("T")[0];
+}
+function lastNDates(n) {
+  const base = new Date(todayStr() + "T00:00:00Z"); // UTC基準（todayStrと一致）
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setUTCDate(d.getUTCDate() - i);
+    out.push(d);
+  }
+  return out;
+}
+function activityDateSet() {
+  const s = new Set();
+  meals.forEach((m) => { if (m.date) s.add(m.date); });
+  workouts.forEach((w) => { if (w.date) s.add(w.date); });
+  return s;
+}
+function currentStreak() {
+  const days = activityDateSet();
+  const base = new Date(todayStr() + "T00:00:00Z");
+  const yest = new Date(base); yest.setUTCDate(yest.getUTCDate() - 1);
+  let start;
+  if (days.has(ymd(base))) start = 0;
+  else if (days.has(ymd(yest))) start = 1;
+  else return 0;
+  let streak = 0;
+  const d = new Date(base); d.setUTCDate(d.getUTCDate() - start);
+  while (days.has(ymd(d))) { streak++; d.setUTCDate(d.getUTCDate() - 1); }
+  return streak;
+}
+function daySets(date) {
+  return workouts.filter((w) => w.date === date).reduce((s, w) => s + (Number(w.sets) || 0), 0);
+}
+
+function renderHomeConsole() {
+  const statsEl = document.getElementById("teleStats");
+  if (!statsEl) return;
+
+  const dates = lastNDates(7);
+  const cals = dates.map((d) => dayTotals(ymd(d)).cal);
+  const sets = dates.map((d) => daySets(ymd(d)));
+  const targets = computeTargets();
+  const goal = targets ? targets.cal : 0;
+  const today = todayStr();
+  const todayCal = dayTotals(today).cal;
+  const pct = goal ? Math.round((todayCal / goal) * 100) : null;
+  const weekSets = sets.reduce((a, b) => a + b, 0);
+  const calAvg = Math.round(cals.reduce((a, b) => a + b, 0) / 7);
+
+  const tiles = [
+    { label: "今日の摂取", value: todayCal, unit: "kcal" },
+    { label: "目標達成率", value: pct == null ? "—" : pct, unit: pct == null ? "" : "%" },
+    { label: "連続記録", value: currentStreak(), unit: "日" },
+    { label: "7日トレ量", value: weekSets, unit: "セット" },
+  ];
+  statsEl.innerHTML = tiles
+    .map((t) => `
+    <div class="tele-stat">
+      <span class="ts-label">${t.label}</span>
+      <span class="ts-value">${t.value}<small>${t.unit}</small></span>
+    </div>`)
+    .join("");
+
+  const calSub = document.getElementById("teleCalSub");
+  if (calSub) calSub.textContent = `7日平均 ${calAvg} kcal`;
+  const volSub = document.getElementById("teleVolSub");
+  if (volSub) volSub.textContent = `7日合計 ${weekSets} セット`;
+
+  const calPlot = document.getElementById("teleCalPlot");
+  if (calPlot) {
+    calPlot.innerHTML = barChartSVG(
+      dates.map((d, i) => ({ label: WD[d.getUTCDay()], value: cals[i], date: ymd(d) })),
+      { goal, unit: "kcal", over: true }
+    );
+  }
+  const volPlot = document.getElementById("teleVolPlot");
+  if (volPlot) {
+    volPlot.innerHTML = barChartSVG(
+      dates.map((d, i) => ({ label: WD[d.getUTCDay()], value: sets[i], date: ymd(d) })),
+      { unit: "セット", cls: "v2" }
+    );
+  }
+}
+
+// 単系列バーチャート（SVG）。goal があれば目標ラインを描画。
+function barChartSVG(data, opts) {
+  opts = opts || {};
+  const W = 340, H = 150, padL = 14, padR = 14, padT = 20, padB = 22;
+  const x0 = padL, x1 = W - padR, y1 = H - padB;
+  const plotW = x1 - x0, plotH = y1 - padT;
+  const vals = data.map((d) => d.value);
+  const maxV = Math.max(1, ...vals, opts.goal || 0);
+  const top = maxV * 1.15;
+  const n = data.length || 1;
+  const slot = plotW / n;
+  const bw = Math.min(34, slot * 0.62);
+  const today = todayStr();
+  const yOf = (v) => y1 - (v / top) * plotH;
+
+  let marks = "";
+  data.forEach((d, i) => {
+    const cx = x0 + slot * i + slot / 2;
+    const h = Math.max(0, (d.value / top) * plotH);
+    const by = y1 - h;
+    const over = opts.over && opts.goal && d.value > opts.goal;
+    const isToday = d.date === today;
+    const cls = "tele-bar" + (opts.cls ? " " + opts.cls : "") + (over ? " over" : "") + (isToday ? " today" : "");
+    marks += `<rect class="${cls}" x="${(cx - bw / 2).toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" ry="4"><title>${escapeHtml(d.date)}（${d.label}） ${d.value}${opts.unit || ""}</title></rect>`;
+    marks += `<text class="tele-axis" x="${cx.toFixed(1)}" y="${H - 6}" text-anchor="middle">${d.label}</text>`;
+    if (isToday && d.value > 0) {
+      marks += `<text class="tele-val" x="${cx.toFixed(1)}" y="${(by - 5).toFixed(1)}" text-anchor="middle">${d.value}</text>`;
+    }
+  });
+
+  let goalLine = "";
+  if (opts.goal) {
+    const gy = yOf(opts.goal);
+    goalLine =
+      `<line class="tele-goal" x1="${x0}" x2="${x1}" y1="${gy.toFixed(1)}" y2="${gy.toFixed(1)}" />` +
+      `<text class="tele-goal-label" x="${x1}" y="${(gy - 4).toFixed(1)}" text-anchor="end">目標 ${opts.goal}</text>`;
+  }
+  const base = `<line class="tele-base" x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" />`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="tele-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7日間の推移">${base}${marks}${goalLine}</svg>`;
 }
 
 // ======================================================
@@ -968,8 +1104,8 @@ function removeMeal(id) {
 function shiftMealDate(delta) {
   const input = document.getElementById("mealDate");
   if (!input) return;
-  const d = new Date((input.value || todayStr()) + "T00:00:00");
-  d.setDate(d.getDate() + delta);
+  const d = new Date((input.value || todayStr()) + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + delta);
   input.value = d.toISOString().split("T")[0];
   renderMeals();
 }

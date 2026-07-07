@@ -2297,3 +2297,50 @@ body.modal-open { overflow: hidden; }
 
 /* 目標達成カード（進捗）のアクセントはグレープに */
 [data-theme="pop"] .summary-card.is-ideal strong { color: #845ef7; }
+
+/* ============================================================
+   ホーム・テレメトリコンソール（stat tiles + 7日バーチャート）
+   ============================================================ */
+
+/* チャート用のアクセント（白地でコントラスト確保・単系列） */
+:root { --chart-bar: var(--cyan); --chart-bar2: var(--maintain); --chart-over: var(--coral); }
+:root[data-theme="pop"] { --chart-bar: #ec4b63; --chart-bar2: #845ef7; --chart-over: #e8590c; }
+
+.console-panel { margin-bottom: 16px; }
+
+.tele-stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px;
+}
+.tele-stat {
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-2);
+}
+.ts-label { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; color: var(--muted); }
+.ts-value {
+  display: block; margin-top: 4px; font-family: var(--font-mono); font-weight: 600; font-size: 1.5rem; line-height: 1;
+  color: var(--cyan); font-variant-numeric: tabular-nums;
+}
+.ts-value small { font-size: 0.5em; color: var(--muted); margin-left: 3px; font-weight: 500; }
+
+.tele-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tele-chart { padding: 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-2); }
+.tele-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.tele-title { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 600; font-size: 0.9rem; color: var(--ink); }
+.tele-title .icon { width: 1em; height: 1em; color: var(--cyan); }
+.tele-sub { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+.tele-plot { width: 100%; }
+.tele-svg { width: 100%; height: auto; display: block; }
+
+.tele-bar { fill: var(--chart-bar); transition: filter 0.15s ease; }
+.tele-bar.v2 { fill: var(--chart-bar2); }
+.tele-bar.over { fill: var(--chart-over); }
+.tele-bar:hover { filter: brightness(1.14); }
+.tele-goal { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.7; }
+.tele-goal-label { fill: var(--ink-2); font-family: var(--font-mono); font-size: 9px; }
+.tele-base { stroke: var(--line-2); stroke-width: 1; }
+.tele-axis { fill: var(--muted); font-family: var(--font-mono); font-size: 10px; }
+.tele-val { fill: var(--ink); font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
+
+@media (max-width: 880px) {
+  .tele-charts { grid-template-columns: 1fr; }
+  .tele-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
