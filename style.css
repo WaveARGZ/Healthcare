@@ -2337,10 +2337,75 @@ body.modal-open { overflow: hidden; }
 .tele-goal { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.7; }
 .tele-goal-label { fill: var(--ink-2); font-family: var(--font-mono); font-size: 9px; }
 .tele-base { stroke: var(--line-2); stroke-width: 1; }
+.tele-grid { stroke: var(--hair); stroke-width: 1; }
+.tele-gridlabel { fill: var(--muted-2); font-family: var(--font-mono); font-size: 8.5px; }
 .tele-axis { fill: var(--muted); font-family: var(--font-mono); font-size: 10px; }
 .tele-val { fill: var(--ink); font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
 
 @media (max-width: 880px) {
   .tele-charts { grid-template-columns: 1fr; }
   .tele-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ============================================================
+   ダッシュボード・コンソール（KPI / 主役グラフ / PFCリング / 部位 / カレンダー）
+   密度と階層を重視：主役=14日カロリー、周辺は小さく詰める
+   ============================================================ */
+
+.dash-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+.dash-hero { margin-bottom: 16px; }
+.dash-hero-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.dash-hero-title strong { display: block; margin-top: 2px; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--ink); }
+.dash-hero-sub { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); text-align: right; }
+.dash-hero-plot { width: 100%; }
+
+.dash-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.dash-mini { padding: 16px 18px; }
+.dash-mini-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
+.dash-mini-head strong { font-family: var(--font-display); font-weight: 600; font-size: 0.98rem; color: var(--ink); }
+.dash-mini-head span { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.dash-empty { margin: 0; padding: 26px 0; text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 0.76rem; }
+.mini-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+/* PFC ドーナツ */
+.dash-pfc { display: flex; align-items: center; gap: 16px; }
+.dash-pfc-ring { flex: none; width: 116px; }
+.donut-svg { width: 116px; height: 116px; display: block; }
+.donut-center { fill: var(--ink); font-family: var(--font-mono); font-weight: 600; font-size: 17px; }
+.donut-sub { fill: var(--muted); font-family: var(--font-mono); font-size: 8.5px; }
+.dash-pfc-legend { flex: 1; display: grid; gap: 9px; min-width: 0; }
+.pfc-leg-row { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.74rem; }
+.pfc-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.pfc-leg-name { color: var(--ink-2); flex: 1; white-space: nowrap; }
+.pfc-leg-val { color: var(--muted); white-space: nowrap; }
+
+/* 部位別 横棒 */
+.dash-parts { display: grid; gap: 9px; }
+.hbar-row { display: grid; grid-template-columns: 68px 1fr 30px; align-items: center; gap: 9px; }
+.hbar-label { font-size: 0.8rem; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar-track { height: 10px; border-radius: 999px; background: var(--panel-3); overflow: hidden; }
+.hbar-fill { display: block; height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+.hbar-val { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); text-align: right; }
+
+/* 記録カレンダー ヒートマップ */
+.dash-heat { display: grid; gap: 4px; }
+.heat-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.heat-wd { font-family: var(--font-mono); font-size: 0.58rem; color: var(--muted-2); text-align: center; }
+.heat-cell { aspect-ratio: 1; border-radius: 3px; background: var(--panel-3); }
+.heat-1 { background: var(--cyan); opacity: 0.42; }
+.heat-2 { background: var(--cyan); opacity: 1; }
+.heat-future { background: transparent; }
+.heat-legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 4px; font-family: var(--font-mono); font-size: 0.58rem; color: var(--muted); }
+.heat-legend .heat-cell { width: 11px; height: 11px; aspect-ratio: auto; }
+
+@media (max-width: 1040px) {
+  .dash-grid3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 880px) {
+  .dash-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dash-grid3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .dash-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

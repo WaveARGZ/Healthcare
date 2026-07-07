@@ -676,7 +676,7 @@ function renderHomeConsole() {
 // 単系列バーチャート（SVG）。goal があれば目標ラインを描画。
 function barChartSVG(data, opts) {
   opts = opts || {};
-  const W = 340, H = 150, padL = 14, padR = 14, padT = 20, padB = 22;
+  const W = opts.w || 340, H = opts.h || 150, padL = opts.padL || 14, padR = 14, padT = 20, padB = 22;
   const x0 = padL, x1 = W - padR, y1 = H - padB;
   const plotW = x1 - x0, plotH = y1 - padT;
   const vals = data.map((d) => d.value);
@@ -712,7 +712,22 @@ function barChartSVG(data, opts) {
   }
   const base = `<line class="tele-base" x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" />`;
 
-  return `<svg viewBox="0 0 ${W} ${H}" class="tele-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7日間の推移">${base}${marks}${goalLine}</svg>`;
+  // 目盛りグリッド（opts.grid）：空きスペースに基準線＋kcal目盛りを入れて情報密度を上げる
+  let grid = "";
+  if (opts.grid) {
+    const raw = top / 3;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    const step = (norm >= 5 ? 5 : norm >= 2 ? 2 : 1) * mag;
+    for (let g = step; g < top; g += step) {
+      if (opts.goal && Math.abs(g - opts.goal) < step * 0.35) continue; // 目標ラインと重なる目盛りは省く
+      const gy = yOf(g);
+      grid += `<line class="tele-grid" x1="${x0}" x2="${x1}" y1="${gy.toFixed(1)}" y2="${gy.toFixed(1)}" />`;
+      grid += `<text class="tele-gridlabel" x="${(x0 - 5).toFixed(1)}" y="${(gy + 3).toFixed(1)}" text-anchor="end">${g}</text>`;
+    }
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="tele-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="推移グラフ">${grid}${base}${marks}${goalLine}</svg>`;
 }
 
 // ======================================================
@@ -974,7 +989,7 @@ function renderDashboardMeals() {
   }
   const sorted = [...meals].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   box.innerHTML = sorted
-    .slice(0, 40)
+    .slice(0, 8)
     .map(
       (m) => `
     <div class="list-item">
@@ -1540,6 +1555,7 @@ function renderWorkouts() {
     workouts.length === 0
       ? `<p class="lead">筋トレ記録はまだありません。</p>`
       : workouts
+          .slice(0, 8)
           .map((workout) => {
             const meta =
               workout.kind === "c"
@@ -1563,15 +1579,145 @@ function renderWorkouts() {
 // ======================================================
 
 function renderDashboard() {
-  const mc = document.getElementById("mealCount");
-  const wc = document.getElementById("workoutCount");
-  const is = document.getElementById("idealSummary");
-  if (mc) mc.textContent = `${meals.length}件`;
-  if (wc) wc.textContent = `${workouts.length}件`;
-  if (is) is.textContent = selectedIdeal ? selectedIdeal.label : "未選択";
+  renderDashboardConsole();
+  renderMeals();     // #dashboardMeals を更新（食事画面は不可視だが無害）
+  renderWorkouts();  // #dashboardWorkouts を更新
+}
 
-  renderMeals();
-  renderWorkouts();
+function renderDashboardConsole() {
+  const statsEl = document.getElementById("dashStats");
+  if (!statsEl) return;
+
+  const d7 = lastNDates(7);
+  const cals7 = d7.map((d) => dayTotals(ymd(d)).cal);
+  const targets = computeTargets();
+  const goal = targets ? targets.cal : 0;
+  const avgCal = Math.round(cals7.reduce((a, b) => a + b, 0) / 7);
+  const adh = goal ? Math.round((avgCal / goal) * 100) : null;
+  const daysLogged = activityDateSet().size;
+
+  const mc = document.getElementById("mealCount");
+  if (mc) mc.textContent = `${meals.length}件`;
+  const wc = document.getElementById("workoutCount");
+  if (wc) wc.textContent = `${workouts.length}件`;
+
+  const tiles = [
+    { label: "食事記録", value: meals.length, unit: "件" },
+    { label: "筋トレ記録", value: workouts.length, unit: "件" },
+    { label: "記録日数", value: daysLogged, unit: "日" },
+    { label: "連続記録", value: currentStreak(), unit: "日" },
+    { label: "平均摂取(7日)", value: avgCal, unit: "kcal" },
+    { label: "達成率(7日)", value: adh == null ? "—" : adh, unit: adh == null ? "" : "%" },
+  ];
+  statsEl.innerHTML = tiles
+    .map((t) => `<div class="tele-stat"><span class="ts-label">${t.label}</span><span class="ts-value">${t.value}<small>${t.unit}</small></span></div>`)
+    .join("");
+
+  // 主役：14日カロリー推移
+  const d14 = lastNDates(14);
+  const cals14 = d14.map((d) => dayTotals(ymd(d)).cal);
+  const avg14 = Math.round(cals14.reduce((a, b) => a + b, 0) / 14);
+  const calSub = document.getElementById("dashCalSub");
+  if (calSub) calSub.textContent = goal ? `目標 ${goal} kcal ・ 14日平均 ${avg14} kcal` : `14日平均 ${avg14} kcal`;
+  const calPlot = document.getElementById("dashCalPlot");
+  if (calPlot) {
+    calPlot.innerHTML = barChartSVG(
+      d14.map((d) => ({ label: String(d.getUTCDate()), value: dayTotals(ymd(d)).cal, date: ymd(d) })),
+      { goal, unit: "kcal", over: true, w: 680, h: 165, padL: 40, grid: true }
+    );
+  }
+
+  renderDashPfc(d7);
+  renderDashParts();
+  renderDashHeat();
+}
+
+// PFCドーナツ（7日平均のカロリー構成）
+function renderDashPfc(dates) {
+  const ring = document.getElementById("dashPfcRing");
+  const leg = document.getElementById("dashPfcLegend");
+  if (!ring || !leg) return;
+  let P = 0, F = 0, C = 0, cal = 0;
+  dates.forEach((d) => { const t = dayTotals(ymd(d)); P += t.p; F += t.f; C += t.c; cal += t.cal; });
+  const n = dates.length || 1;
+  P /= n; F /= n; C /= n;
+  const avgCal = Math.round(cal / n);
+  const segs = [
+    { label: "P たんぱく質", g: Math.round(P), cal: P * 4, color: "#0d9488" },
+    { label: "F 脂質", g: Math.round(F), cal: F * 9, color: "#ef4444" },
+    { label: "C 炭水化物", g: Math.round(C), cal: C * 4, color: "#3b82f6" },
+  ];
+  const tot = segs.reduce((s, x) => s + x.cal, 0) || 1;
+  ring.innerHTML = donutSVG(segs.map((s) => ({ label: s.label, value: s.cal, color: s.color })), `${avgCal}`, "kcal/日");
+  leg.innerHTML = segs
+    .map((s) => `<div class="pfc-leg-row"><span class="pfc-dot" style="background:${s.color}"></span><span class="pfc-leg-name">${s.label}</span><span class="pfc-leg-val">${s.g}g ・ ${Math.round((s.cal / tot) * 100)}%</span></div>`)
+    .join("");
+}
+
+function donutSVG(segs, centerLabel, centerSub) {
+  const cx = 60, cy = 60, rr = 43, sw = 15;
+  const circ = 2 * Math.PI * rr;
+  const total = segs.reduce((s, x) => s + x.value, 0) || 1;
+  const gap = 5;
+  let acc = 0, arcs = "";
+  segs.forEach((s) => {
+    const segLen = (s.value / total) * circ;
+    const drawLen = Math.max(0, segLen - gap);
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${drawLen.toFixed(2)} ${(circ - drawLen).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${escapeHtml(s.label)} ${Math.round((s.value / total) * 100)}%</title></circle>`;
+    acc += segLen;
+  });
+  return `<svg viewBox="0 0 120 120" class="donut-svg" role="img">
+    <circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="var(--panel-3)" stroke-width="${sw}" />
+    ${arcs}
+    <text x="60" y="57" text-anchor="middle" class="donut-center">${escapeHtml(centerLabel)}</text>
+    <text x="60" y="71" text-anchor="middle" class="donut-sub">${escapeHtml(centerSub)}</text>
+  </svg>`;
+}
+
+// 部位別トレーニング（横棒・PART_COLORで色分け）
+function renderDashParts() {
+  const el = document.getElementById("dashParts");
+  if (!el) return;
+  const by = {};
+  workouts.forEach((w) => { const p = w.bodyPart || "その他"; by[p] = (by[p] || 0) + (Number(w.sets) || 1); });
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  if (!rows.length) { el.innerHTML = `<p class="dash-empty">筋トレ記録がありません。</p>`; return; }
+  const max = Math.max(...rows.map((r) => r[1]), 1);
+  el.innerHTML = rows
+    .slice(0, 6)
+    .map(([p, v]) => {
+      const col = (PART_COLOR[p] && PART_COLOR[p][0]) || "var(--cyan)";
+      return `<div class="hbar-row"><span class="hbar-label">${escapeHtml(p)}</span><span class="hbar-track"><span class="hbar-fill" style="width:${Math.round((v / max) * 100)}%;background:${col}"></span></span><span class="hbar-val">${v}</span></div>`;
+    })
+    .join("");
+}
+
+// 記録カレンダー（直近5週のヒートマップ）
+function renderDashHeat() {
+  const el = document.getElementById("dashHeat");
+  if (!el) return;
+  const mealDays = new Set(meals.map((m) => m.date));
+  const woDays = new Set(workouts.map((w) => w.date));
+  const base = new Date(todayStr() + "T00:00:00Z");
+  const sunday = new Date(base); sunday.setUTCDate(base.getUTCDate() - base.getUTCDay());
+  const todayY = todayStr();
+
+  const head = `<div class="heat-row heat-head">${WD.map((w) => `<span class="heat-wd">${w}</span>`).join("")}</div>`;
+  let rows = "";
+  for (let wk = 4; wk >= 0; wk--) {
+    let cells = "";
+    for (let wd = 0; wd < 7; wd++) {
+      const d = new Date(sunday); d.setUTCDate(sunday.getUTCDate() - wk * 7 + wd);
+      const y = ymd(d);
+      if (y > todayY) { cells += `<span class="heat-cell heat-future"></span>`; continue; }
+      const lvl = (mealDays.has(y) ? 1 : 0) + (woDays.has(y) ? 1 : 0);
+      const lab = lvl === 0 ? "記録なし" : lvl === 1 ? "記録あり" : "食事＋筋トレ";
+      cells += `<span class="heat-cell heat-${lvl}" title="${y} ${lab}"></span>`;
+    }
+    rows += `<div class="heat-row">${cells}</div>`;
+  }
+  el.innerHTML = head + rows +
+    `<div class="heat-legend"><span>少</span><span class="heat-cell heat-0"></span><span class="heat-cell heat-1"></span><span class="heat-cell heat-2"></span><span>多</span></div>`;
 }
 
 function setupFeedback() {

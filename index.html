@@ -621,51 +621,49 @@
               <button class="secondary-btn" data-go="homeScreen">ホームへ戻る</button>
             </div>
 
-            <div class="summary-grid">
-              <div class="summary-card">
-                <span>MEALS LOGGED</span>
-                <strong id="mealCount">0件</strong>
-                <small class="summary-sub">食事記録</small>
+            <!-- KPIストリップ（密度重視） -->
+            <div class="tele-stats dash-kpi" id="dashStats"></div>
+
+            <!-- 主役：14日カロリー推移 -->
+            <div class="panel dash-hero">
+              <div class="dash-hero-head">
+                <div class="dash-hero-title"><span class="ts-label">摂取カロリー</span><strong>14日間の推移</strong></div>
+                <span class="dash-hero-sub" id="dashCalSub"></span>
               </div>
-              <div class="summary-card">
-                <span>WORKOUTS LOGGED</span>
-                <strong id="workoutCount">0件</strong>
-                <small class="summary-sub">筋トレ記録</small>
-              </div>
-              <div class="summary-card is-ideal">
-                <span>LOCKED TARGET</span>
-                <strong id="idealSummary">未選択</strong>
-                <small class="summary-sub">目標体型</small>
-              </div>
+              <div class="dash-hero-plot" id="dashCalPlot"></div>
             </div>
 
-            <!-- 進捗グラフ（要件: 体重・摂取・運動の可視化） -->
-            <div class="panel graph-panel">
-              <div class="panel-head"><span class="panel-label">PROGRESS GRAPH</span><span class="soon-tag">実装予定</span></div>
-              <div class="graph-ghost">
-                <svg class="graph-line" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true">
-                  <polyline points="0,96 90,80 180,86 270,58 360,64 450,38 540,44 600,22" />
-                </svg>
-                <p class="graph-note">体重・摂取カロリー・運動量の推移をここに可視化します（次段階で実装）。</p>
+            <!-- 副：PFC / 部位別 / 記録カレンダー -->
+            <div class="dash-grid3">
+              <div class="panel dash-mini">
+                <div class="dash-mini-head"><strong>PFCバランス</strong><span>7日平均</span></div>
+                <div class="dash-pfc"><div class="dash-pfc-ring" id="dashPfcRing"></div><div class="dash-pfc-legend" id="dashPfcLegend"></div></div>
+              </div>
+              <div class="panel dash-mini">
+                <div class="dash-mini-head"><strong>部位別トレーニング</strong><span>セット数</span></div>
+                <div class="dash-parts" id="dashParts"></div>
+              </div>
+              <div class="panel dash-mini">
+                <div class="dash-mini-head"><strong>記録カレンダー</strong><span>直近5週</span></div>
+                <div class="dash-heat" id="dashHeat"></div>
               </div>
             </div>
 
             <div class="content-grid">
               <div class="panel">
-                <div class="panel-head"><span class="panel-label">食事記録一覧</span></div>
+                <div class="panel-head"><span class="panel-label">食事記録</span><span class="mini-count" id="mealCount"></span></div>
                 <div id="dashboardMeals" class="list-area"></div>
               </div>
               <div class="panel">
-                <div class="panel-head"><span class="panel-label">筋トレ記録一覧</span></div>
+                <div class="panel-head"><span class="panel-label">筋トレ記録</span><span class="mini-count" id="workoutCount"></span></div>
                 <div id="dashboardWorkouts" class="list-area"></div>
               </div>
             </div>
 
             <div class="panel feedback-card">
-              <div class="panel-head"><span class="panel-label">AI FEEDBACK</span><span class="dot"></span></div>
-              <p class="lead">現在の記録をもとに、ルールベースで簡単なコメントを生成します。</p>
-              <button class="primary-btn" id="generateFeedbackButton">フィードバックを生成</button>
-              <div id="feedbackBox" class="feedback-box">まだフィードバックはありません。</div>
+              <div class="panel-head"><span class="panel-label">REVIEW // 本日の所見</span><span class="dot"></span></div>
+              <button class="primary-btn" id="generateFeedbackButton">所見を生成</button>
+              <div id="feedbackBox" class="feedback-box">記録をもとに、コンディションの所見を表示します。</div>
             </div>
           </div>
         </section>
