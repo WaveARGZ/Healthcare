@@ -2011,12 +2011,35 @@ function setupThemeToggle() {
 }
 
 // ======================================================
+// ピンチ拡大の無効化（iOS Safari は viewport の user-scalable を無視するため JS で抑止）
+// ======================================================
+
+function setupNoPinchZoom() {
+  // iOS Safari のピンチジェスチャを抑止
+  ["gesturestart", "gesturechange", "gestureend"].forEach((ev) => {
+    document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+  });
+  // 2本指以上のタッチ移動（ピンチ）を抑止（1本指スクロールは維持）
+  document.addEventListener("touchmove", (e) => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+  // ダブルタップ拡大の保険（touch-action で無効化済みだが古い端末向け）
+  let lastTap = 0;
+  document.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+}
+
+// ======================================================
 // 初期化
 // ======================================================
 
 function init() {
   setupNavigationButtons();
   setupThemeToggle();
+  setupNoPinchZoom();
   setTodayToDateInputs();
 
   setupAuth();
