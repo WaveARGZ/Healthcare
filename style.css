@@ -1951,6 +1951,7 @@ body.modal-open { overflow: hidden; }
 .ex-modal-backdrop { position: absolute; inset: 0; background: rgba(5, 8, 13, 0.66); backdrop-filter: blur(4px); }
 .ex-modal-card {
   position: relative; width: min(480px, 100%); max-height: 86vh; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain; /* iOS: モーダル内を確実にスクロール */
   background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r-lg);
   padding: 22px; box-shadow: var(--shadow); animation: riseIn 0.25s ease both;
 }
@@ -2459,4 +2460,27 @@ body.modal-open { overflow: hidden; }
   .brand { min-width: 0; }
   .brand-text { min-width: 0; }
   .brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* ============================================================
+   iOSの日付入力の値が中央寄せでズレて見えるのを左寄せに
+   ============================================================ */
+input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+
+/* ============================================================
+   モーダルをモバイルでボトムシート化
+   （中央固定だと下の＋ボタンがブラウザUIの下に隠れて押せないため、
+     画面下から出して内部スクロールで最下部まで届くようにする）
+   ============================================================ */
+@media (max-width: 560px) {
+  .ex-modal { align-items: flex-end; justify-content: center; padding: 0; }
+  .ex-modal-card,
+  .food-modal-card {
+    width: 100%;
+    max-width: none;
+    max-height: 88dvh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-bottom: none;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
 }

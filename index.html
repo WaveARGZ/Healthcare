@@ -514,35 +514,6 @@
             <!-- meal slots -->
             <div class="meal-slots" id="mealSlots"></div>
           </div>
-
-          <!-- 食品検索モーダル（種目詳細モーダルと同じシェルを再利用） -->
-          <div class="ex-modal" id="foodModal" hidden>
-            <div class="ex-modal-backdrop" data-close-food="1"></div>
-            <div class="ex-modal-card food-modal-card">
-              <button type="button" class="ex-ic ex-modal-close" id="foodModalClose" aria-label="閉じる"><svg class="icon"><use href="#i-close" /></svg></button>
-              <div class="food-modal-head">
-                <span class="food-modal-kicker">FOOD DATABASE</span>
-                <h3 id="foodModalTitle">食品を追加</h3>
-              </div>
-              <div class="food-search-wrap">
-                <svg class="icon food-search-ico" aria-hidden="true"><use href="#i-search" /></svg>
-                <input type="search" id="foodSearch" placeholder="食品を検索（例：ご飯、鶏むね、卵、味噌汁）" autocomplete="off" />
-              </div>
-              <div class="food-cats" id="foodCats"></div>
-              <div class="food-results" id="foodResults"></div>
-              <details class="food-custom">
-                <summary>データベースにない食品を手入力で追加</summary>
-                <div class="custom-grid">
-                  <label>食品名<input type="text" id="customFoodName" placeholder="自作スムージー" /></label>
-                  <label>カロリー <span class="unit">kcal</span><input type="number" id="customFoodCal" placeholder="220" /></label>
-                  <label>P たんぱく <span class="unit">g</span><input type="number" id="customFoodP" placeholder="30" /></label>
-                  <label>F 脂質 <span class="unit">g</span><input type="number" id="customFoodF" placeholder="5" /></label>
-                  <label>C 炭水化物 <span class="unit">g</span><input type="number" id="customFoodC" placeholder="12" /></label>
-                </div>
-                <button class="primary-btn" id="customFoodAdd"><svg class="icon"><use href="#i-plus" /></svg>この内容で追加</button>
-              </details>
-            </div>
-          </div>
         </section>
 
         <!-- 筋トレ記録 -->
@@ -586,29 +557,6 @@
                   <div id="latestWorkouts" class="list-area"></div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- 種目詳細モーダル -->
-          <div class="ex-modal" id="exModal" hidden>
-            <div class="ex-modal-backdrop" data-close="1"></div>
-            <div class="ex-modal-card">
-              <button type="button" class="ex-ic ex-modal-close" id="exmClose" aria-label="閉じる"><svg class="icon"><use href="#i-close" /></svg></button>
-              <div class="exm-head">
-                <span class="exm-fig"><svg id="exmFig" viewBox="0 0 120 240" aria-hidden="true"><use id="exmFigUse" href="#fig-front" /></svg></span>
-                <div class="exm-title">
-                  <p class="exm-part" id="exmPart"></p>
-                  <h3 id="exmName"></h3>
-                  <div class="exm-meta" id="exmMeta"></div>
-                </div>
-              </div>
-              <div class="exm-muscles" id="exmMuscles"></div>
-              <p class="exm-desc" id="exmDesc"></p>
-              <div class="exm-links">
-                <a class="primary-btn" id="exmYt" target="_blank" rel="noopener">フォーム動画を検索</a>
-                <a class="secondary-btn" id="exmGg" target="_blank" rel="noopener">Googleで調べる</a>
-              </div>
-              <button type="button" class="secondary-btn exm-bm" id="exmBookmark"></button>
             </div>
           </div>
         </section>
@@ -753,6 +701,57 @@
   </div>
 
   <script src="exercises.js"></script>
+  <!-- ===== モーダル（screen外＝トップレベルに配置：screenのtransformでposition:fixedが壊れるのを防ぐ） ===== -->
+  <div class="ex-modal" id="foodModal" hidden>
+    <div class="ex-modal-backdrop" data-close-food="1"></div>
+    <div class="ex-modal-card food-modal-card">
+      <button type="button" class="ex-ic ex-modal-close" id="foodModalClose" aria-label="閉じる"><svg class="icon"><use href="#i-close" /></svg></button>
+      <div class="food-modal-head">
+        <span class="food-modal-kicker">FOOD DATABASE</span>
+        <h3 id="foodModalTitle">食品を追加</h3>
+      </div>
+      <div class="food-search-wrap">
+        <svg class="icon food-search-ico" aria-hidden="true"><use href="#i-search" /></svg>
+        <input type="search" id="foodSearch" placeholder="食品を検索（例：ご飯、鶏むね、卵、味噌汁）" autocomplete="off" />
+      </div>
+      <div class="food-cats" id="foodCats"></div>
+      <div class="food-results" id="foodResults"></div>
+      <details class="food-custom">
+        <summary>データベースにない食品を手入力で追加</summary>
+        <div class="custom-grid">
+          <label>食品名<input type="text" id="customFoodName" placeholder="自作スムージー" /></label>
+          <label>カロリー <span class="unit">kcal</span><input type="number" id="customFoodCal" placeholder="220" /></label>
+          <label>P たんぱく <span class="unit">g</span><input type="number" id="customFoodP" placeholder="30" /></label>
+          <label>F 脂質 <span class="unit">g</span><input type="number" id="customFoodF" placeholder="5" /></label>
+          <label>C 炭水化物 <span class="unit">g</span><input type="number" id="customFoodC" placeholder="12" /></label>
+        </div>
+        <button class="primary-btn" id="customFoodAdd"><svg class="icon"><use href="#i-plus" /></svg>この内容で追加</button>
+      </details>
+    </div>
+  </div>
+
+  <div class="ex-modal" id="exModal" hidden>
+    <div class="ex-modal-backdrop" data-close="1"></div>
+    <div class="ex-modal-card">
+      <button type="button" class="ex-ic ex-modal-close" id="exmClose" aria-label="閉じる"><svg class="icon"><use href="#i-close" /></svg></button>
+      <div class="exm-head">
+        <span class="exm-fig"><svg id="exmFig" viewBox="0 0 120 240" aria-hidden="true"><use id="exmFigUse" href="#fig-front" /></svg></span>
+        <div class="exm-title">
+          <p class="exm-part" id="exmPart"></p>
+          <h3 id="exmName"></h3>
+          <div class="exm-meta" id="exmMeta"></div>
+        </div>
+      </div>
+      <div class="exm-muscles" id="exmMuscles"></div>
+      <p class="exm-desc" id="exmDesc"></p>
+      <div class="exm-links">
+        <a class="primary-btn" id="exmYt" target="_blank" rel="noopener">フォーム動画を検索</a>
+        <a class="secondary-btn" id="exmGg" target="_blank" rel="noopener">Googleで調べる</a>
+      </div>
+      <button type="button" class="secondary-btn exm-bm" id="exmBookmark"></button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
