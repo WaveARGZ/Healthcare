@@ -48,7 +48,17 @@ const K = {
   posts: "bm_posts", // 掲示板（端末内で共有）
   userData: (id) => `bm_u:${id}:data`, // ユーザーごとの記録
   userPhoto: (id) => `bm_u:${id}:photo`, // ユーザーごとの写真
+  adminSession: "bm_admin", // 研究用・管理者ログイン状態
 };
+
+// ---------- 研究用・管理者（データ監視）アカウント ----------
+// 専用メアド＋専用パスワードでログインすると、通常のユーザー画面ではなく
+// 全ユーザーのデータを監視できる管理画面へ遷移する。
+// ※研究プロトタイプ。クライアント側判定のため厳密なセキュリティではない。
+//   本実装ではサーバ側認証（Supabase等のRLS＋管理ロール）で行う。
+const ADMIN_EMAIL = "admin@bodymake.jp";
+const ADMIN_SALT = "bm-admin-salt-v1";
+const ADMIN_HASH = "8e1b2328"; // hashPassword("BodyMakeAdmin2026", ADMIN_SALT)
 
 // ---------- utilities ----------
 
@@ -114,6 +124,23 @@ function clearSession() {
 function currentUser() {
   const s = getSession();
   return s ? findUserById(s.userId) : null;
+}
+
+// ---------- 管理者セッション ----------
+function isAdmin() {
+  return DB.get(K.adminSession, null) === true;
+}
+function setAdminSession() {
+  DB.set(K.adminSession, true);
+}
+function clearAdminSession() {
+  DB.remove(K.adminSession);
+}
+function isAdminLogin(email, password) {
+  return (
+    String(email || "").trim().toLowerCase() === ADMIN_EMAIL &&
+    hashPassword(password, ADMIN_SALT) === ADMIN_HASH
+  );
 }
 
 // ---------- app state (現在ログイン中ユーザーの作業データ) ----------
@@ -184,6 +211,7 @@ function showScreen(screenId) {
   if (screenId === "dashboardScreen") renderDashboard();
   if (screenId === "settingsScreen") renderSettings();
   if (screenId === "communityScreen") renderPosts();
+  if (screenId === "adminScreen") renderAdmin();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -207,6 +235,15 @@ function applyAuthedUI(shown) {
 }
 
 function route() {
+  // 研究用・管理者ログインを最優先で判定
+  if (isAdmin()) {
+    document.body.classList.remove("is-authed");
+    document.body.classList.add("is-admin");
+    showScreen("adminScreen");
+    return;
+  }
+  document.body.classList.remove("is-admin");
+
   const u = currentUser();
 
   if (!u) {
@@ -366,6 +403,16 @@ function handleLogin() {
 
   if (!email || !pw) {
     setAuthError("メールアドレスとパスワードを入力してください。");
+    return;
+  }
+
+  // 研究用・管理者ログイン（専用メアド＋専用パスワード）
+  if (isAdminLogin(email, pw)) {
+    clearSession(); // 通常ユーザーのセッションは解除
+    clearUserState();
+    setAdminSession();
+    resetAuthForms();
+    route(); // → 管理画面
     return;
   }
 
@@ -2033,6 +2080,157 @@ function setupNoPinchZoom() {
 }
 
 // ======================================================
+// 研究用・管理者（データ監視）画面
+// この端末のローカルDBに保存された全アカウントの記録を一覧・書き出しする。
+// ======================================================
+
+let adminQuery = "";
+
+function collectAllData() {
+  return getUsers().map((u) => {
+    const d = DB.get(K.userData(u.id), {});
+    const meals = Array.isArray(d.meals) ? d.meals : [];
+    const workouts = Array.isArray(d.workouts) ? d.workouts : [];
+    const dates = new Set([...meals.map((m) => m.date), ...workouts.map((w) => w.date)].filter(Boolean));
+    const lastActive = [...dates].sort().pop() || null;
+    return {
+      u,
+      profile: d.profile || null,
+      selectedIdeal: d.selectedIdeal || null,
+      meals,
+      workouts,
+      daysLogged: dates.size,
+      lastActive,
+      hasPhoto: DB.getRaw(K.userPhoto(u.id)) != null,
+    };
+  });
+}
+
+function renderAdmin() {
+  const all = collectAllData();
+  const posts = DB.get(K.posts, []);
+  const totalMeals = all.reduce((s, a) => s + a.meals.length, 0);
+  const totalWorkouts = all.reduce((s, a) => s + a.workouts.length, 0);
+
+  const statsEl = document.getElementById("adminStats");
+  if (statsEl) {
+    const tiles = [
+      { label: "アカウント", value: all.length, unit: "件" },
+      { label: "食事記録", value: totalMeals, unit: "件" },
+      { label: "筋トレ記録", value: totalWorkouts, unit: "件" },
+      { label: "掲示板投稿", value: posts.length, unit: "件" },
+    ];
+    statsEl.innerHTML = tiles
+      .map((t) => `<div class="tele-stat"><span class="ts-label">${t.label}</span><span class="ts-value">${t.value}<small>${t.unit}</small></span></div>`)
+      .join("");
+  }
+
+  const cnt = document.getElementById("adminUserCount");
+  if (cnt) cnt.textContent = `${all.length}件`;
+
+  const list = document.getElementById("adminUserList");
+  if (!list) return;
+  const q = adminQuery.trim().toLowerCase();
+  const filtered = all.filter((a) => !q || String(a.u.name || "").toLowerCase().includes(q) || String(a.u.email || "").toLowerCase().includes(q));
+  if (!filtered.length) {
+    list.innerHTML = `<p class="admin-empty">${all.length ? "該当するユーザーがいません。" : "この端末に登録されたユーザーはまだいません。"}</p>`;
+    return;
+  }
+  list.innerHTML = filtered.map(adminUserCard).join("");
+}
+
+function adminUserCard(a) {
+  const p = a.profile;
+  const spec = p ? `${escapeHtml(p.age)}歳 / ${escapeHtml(p.gender)} ・ ${escapeHtml(p.height)}cm / ${escapeHtml(p.weight)}kg` : "プロフィール未入力";
+  const goal = p ? escapeHtml(p.goal) : "—";
+  const ideal = a.selectedIdeal ? escapeHtml(a.selectedIdeal.label) : "未選択";
+  const created = a.u.createdAt ? new Date(a.u.createdAt).toLocaleString("ja-JP") : "—";
+
+  const mealRows =
+    a.meals.slice(0, 8).map((m) => `<li>${escapeHtml(m.date)} ・ ${escapeHtml(SLOT_LABEL[m.slot] || "食事")} / ${escapeHtml(m.name)}<span>${itemCal(m)}kcal ×${m.qty}</span></li>`).join("") ||
+    `<li class="none">記録なし</li>`;
+  const woRows =
+    a.workouts.slice(0, 8).map((w) => {
+      const meta = w.kind === "c" ? `有酸素 ${Number(w.minutes) || 0}分` : `${Number(w.weight) ? Number(w.weight) + "kg" : "自重"} ×${Number(w.reps) || 0} ×${Number(w.sets) || 0}`;
+      return `<li>${escapeHtml(w.date)} ・ ${escapeHtml(w.bodyPart || "")} / ${escapeHtml(w.name)}<span>${meta}</span></li>`;
+    }).join("") || `<li class="none">記録なし</li>`;
+
+  return `
+  <details class="admin-user">
+    <summary>
+      <div class="au-head">
+        <div class="au-id">
+          <strong>${escapeHtml(a.u.name || "（無名）")}</strong>
+          <span class="au-email">${escapeHtml(a.u.email || "")}</span>
+        </div>
+        <div class="au-metrics">
+          <span>食 ${a.meals.length}</span><span>筋 ${a.workouts.length}</span><span>日 ${a.daysLogged}</span>
+        </div>
+      </div>
+    </summary>
+    <div class="au-body">
+      <div class="au-facts">
+        <div><span>スペック</span><strong>${spec}</strong></div>
+        <div><span>目標</span><strong>${goal}</strong></div>
+        <div><span>理想体型</span><strong>${ideal}</strong></div>
+        <div><span>登録日時</span><strong>${created}</strong></div>
+        <div><span>最終記録日</span><strong>${a.lastActive ? escapeHtml(a.lastActive) : "—"}</strong></div>
+        <div><span>体型写真</span><strong>${a.hasPhoto ? "あり" : "なし"}</strong></div>
+      </div>
+      <div class="au-records">
+        <div class="au-rec"><h5>食事（最近8件）</h5><ul>${mealRows}</ul></div>
+        <div class="au-rec"><h5>筋トレ（最近8件）</h5><ul>${woRows}</ul></div>
+      </div>
+    </div>
+  </details>`;
+}
+
+function adminExportJson() {
+  const users = collectAllData().map((a) => ({
+    account: { name: a.u.name, email: a.u.email, createdAt: a.u.createdAt, consentedAt: a.u.consentedAt },
+    profile: a.profile,
+    selectedIdeal: a.selectedIdeal,
+    meals: a.meals,
+    workouts: a.workouts,
+    daysLogged: a.daysLogged,
+    lastActive: a.lastActive,
+  }));
+  const payload = {
+    app: "BodyMake Support — research export",
+    exportedAt: new Date().toISOString(),
+    deviceScope: "この端末のローカルDBに保存されたアカウントのみ",
+    userCount: users.length,
+    users,
+    posts: DB.get(K.posts, []),
+  };
+  downloadFile(`bodymake_research_all_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload, null, 2), "application/json");
+}
+
+function adminExportCsv() {
+  const rows = [["user_name", "user_email", "type", "date", "name", "detail1", "detail2", "detail3"]];
+  collectAllData().forEach((a) => {
+    a.meals.forEach((m) =>
+      rows.push([a.u.name, a.u.email, "meal", m.date, `${SLOT_LABEL[m.slot] || ""} ${m.name}`.trim(), `${itemCal(m)}kcal`, `x${m.qty}`, `P${round1(itemMacro(m, "p"))} F${round1(itemMacro(m, "f"))} C${round1(itemMacro(m, "c"))}`])
+    );
+    a.workouts.forEach((w) => {
+      const detail = w.kind === "c" ? [`${Number(w.minutes) || 0}min`, "", ""] : [Number(w.weight) ? `${Number(w.weight)}kg` : "bodyweight", `${Number(w.reps) || 0}x${Number(w.sets) || 0}`, ""];
+      rows.push([a.u.name, a.u.email, "workout", w.date, w.name, w.bodyPart || "", detail[0], detail[1]]);
+    });
+  });
+  const csv = rows.map((r) => r.map(csvEscape).join(",")).join("\n");
+  downloadFile(`bodymake_research_all_${new Date().toISOString().slice(0, 10)}.csv`, "﻿" + csv, "text/csv;charset=utf-8");
+}
+
+function setupAdmin() {
+  const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+  on("adminLogout", "click", () => { clearAdminSession(); route(); });
+  on("adminRefresh", "click", renderAdmin);
+  on("adminExportJson", "click", adminExportJson);
+  on("adminExportCsv", "click", adminExportCsv);
+  on("adminSearch", "input", (e) => { adminQuery = e.target.value; renderAdmin(); });
+}
+
+// ======================================================
 // 初期化
 // ======================================================
 
@@ -2052,6 +2250,7 @@ function init() {
   setupFeedback();
   setupCommunity();
   setupSettings();
+  setupAdmin();
 
   renderPosts();
   route();

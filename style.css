@@ -355,12 +355,13 @@ h3 {
   background: linear-gradient(180deg, var(--panel), var(--canvas) 70%);
 }
 
-/* hide rail during auth / consent / onboarding */
+/* hide rail during auth / consent / onboarding / admin */
 .app-shell:has(#authScreen.active) .app-rail,
 .app-shell:has(#consentScreen.active) .app-rail,
 .app-shell:has(#profileScreen.active) .app-rail,
 .app-shell:has(#photoScreen.active) .app-rail,
-.app-shell:has(#idealScreen.active) .app-rail {
+.app-shell:has(#idealScreen.active) .app-rail,
+.app-shell:has(#adminScreen.active) .app-rail {
   display: none;
 }
 
@@ -2483,4 +2484,67 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     border-bottom: none;
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
+}
+
+/* ============================================================
+   研究用・管理者（データ監視）画面
+   ============================================================ */
+.admin-header { flex-wrap: wrap; gap: 14px; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-note {
+  margin: 0; padding: 12px 14px; border: 1px solid var(--coral-line); border-left: 3px solid var(--coral);
+  border-radius: var(--r-sm); background: var(--coral-soft); color: var(--ink-2);
+  font-size: 0.85rem; line-height: 1.6;
+}
+.admin-note strong { color: var(--coral); font-weight: 600; }
+.admin-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.admin-search { margin: 4px 0 14px; }
+.admin-search .panel-label { display: block; margin-bottom: 4px; }
+.admin-search input { margin-top: 0; }
+
+.admin-users { display: grid; gap: 10px; }
+.admin-empty {
+  margin: 0; padding: 26px 0; text-align: center; color: var(--muted);
+  font-family: var(--font-mono); font-size: 0.82rem;
+}
+
+.admin-user { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-2); overflow: hidden; }
+.admin-user > summary {
+  list-style: none; cursor: pointer; padding: 12px 14px;
+  transition: background 0.14s ease;
+}
+.admin-user > summary::-webkit-details-marker { display: none; }
+.admin-user > summary:hover { background: var(--panel-3); }
+.admin-user[open] > summary { border-bottom: 1px solid var(--line); }
+.au-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.au-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.au-id strong { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--ink); }
+.au-email { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.au-metrics { display: flex; gap: 8px; flex: none; }
+.au-metrics span {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--cyan);
+  padding: 3px 8px; border: 1px solid var(--cyan-line); border-radius: 999px; background: var(--cyan-soft); white-space: nowrap;
+}
+.au-body { padding: 14px; display: grid; gap: 14px; }
+.au-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.au-facts > div { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); }
+.au-facts span { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--muted); }
+.au-facts strong { font-size: 0.85rem; color: var(--ink); font-weight: 600; }
+
+.au-records { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.au-rec h5 { margin: 0 0 8px; font-family: var(--font-display); font-weight: 600; font-size: 0.86rem; color: var(--ink); }
+.au-rec ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.au-rec li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-2);
+  padding: 6px 10px; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: var(--r-xs); background: var(--panel);
+}
+.au-rec li span { color: var(--cyan); white-space: nowrap; }
+.au-rec li.none { color: var(--muted); border-left-color: var(--line-2); justify-content: center; }
+
+@media (max-width: 880px) {
+  .admin-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .au-facts { grid-template-columns: 1fr; }
+  .au-records { grid-template-columns: 1fr; }
 }

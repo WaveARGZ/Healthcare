@@ -691,6 +691,39 @@
             </div>
           </div>
         </section>
+
+        <!-- 研究用・管理者（データ監視）画面 -->
+        <section id="adminScreen" class="screen">
+          <div class="page-layout">
+            <div class="page-header admin-header">
+              <div class="page-title">
+                <p class="eyebrow">RESEARCH // ADMIN</p>
+                <h2>データ管理（研究用）</h2>
+              </div>
+              <div class="admin-actions">
+                <button class="secondary-btn" id="adminRefresh">更新</button>
+                <button class="secondary-btn" id="adminExportJson">全データJSON</button>
+                <button class="secondary-btn" id="adminExportCsv">全データCSV</button>
+                <button class="secondary-btn danger-btn" id="adminLogout">ログアウト</button>
+              </div>
+            </div>
+
+            <p class="admin-note">
+              ⚠ 監視できるのは<strong>この端末（ブラウザ）に登録されたアカウント</strong>のみです。サーバーレスの研究プロトタイプのため、別端末のデータは表示されません。本実装ではサーバDB＋管理ロール認証で全体を集約します。
+            </p>
+
+            <div class="tele-stats admin-kpi" id="adminStats"></div>
+
+            <div class="panel">
+              <div class="panel-head"><span class="panel-label">ACCOUNTS // 全ユーザー</span><span class="mini-count" id="adminUserCount"></span></div>
+              <label class="admin-search">
+                <span class="panel-label">SEARCH</span>
+                <input type="search" id="adminSearch" placeholder="名前・メールで検索" autocomplete="off" />
+              </label>
+              <div id="adminUserList" class="admin-users"></div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
 
