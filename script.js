@@ -208,6 +208,11 @@ function showScreen(screenId) {
 
   if (screenId === "homeScreen") renderHome();
   if (screenId === "mealScreen") renderMeals();
+  if (screenId === "workoutScreen") {
+    if (typeof renderExList === "function") renderExList();
+    if (typeof renderPending === "function") renderPending();
+    if (typeof renderWorkouts === "function") renderWorkouts();
+  }
   if (screenId === "dashboardScreen") renderDashboard();
   if (screenId === "settingsScreen") renderSettings();
   if (screenId === "communityScreen") renderPosts();
@@ -231,7 +236,11 @@ function applyAuthedUI(shown) {
   document.body.classList.toggle("is-authed", shown);
   const u = currentUser();
   const name = document.getElementById("accountName");
-  if (name) name.textContent = u ? u.name : "";
+  if (name) name.textContent = u ? `${u.name}さん` : "";
+  const initial = document.getElementById("accountInitial");
+  if (initial) initial.textContent = u && u.name ? u.name.charAt(0) : "";
+  const goalEl = document.getElementById("accountGoal");
+  if (goalEl) goalEl.textContent = typeof selectedIdeal !== "undefined" && selectedIdeal ? `${selectedIdeal.label}をめざす` : "設定・データ管理";
 }
 
 function route() {
@@ -604,28 +613,190 @@ function setupIdealSelection() {
 // ホーム
 // ======================================================
 
-function renderHome() {
-  const summary = document.getElementById("profileSummary");
-  const title = document.getElementById("welcomeTitle");
-  if (!summary || !title) return;
+function fmtNum(n) {
+  return Number(n || 0).toLocaleString("ja-JP");
+}
 
-  if (!profile) {
-    summary.innerHTML = "<p>プロフィール未入力</p>";
-    title.textContent = "まずはプロフィールを入力しましょう";
-    return;
+function renderHome() {
+  const title = document.getElementById("welcomeTitle");
+  if (!title) return;
+
+  // あいさつ（時間帯＋名前）
+  const u = currentUser();
+  const hour = new Date().getHours();
+  const hello = hour < 4 ? "こんばんは" : hour < 11 ? "おはよう" : hour < 18 ? "こんにちは" : "こんばんは";
+  title.textContent = u && u.name ? `${hello}、${u.name}さん` : "今日も記録を始めましょう";
+
+  const dateEl = document.getElementById("homeDate");
+  if (dateEl) {
+    const now = new Date();
+    dateEl.textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${WD[now.getDay()]}曜日`;
+  }
+  const avatar = document.getElementById("homeAvatar");
+  if (avatar) avatar.textContent = u && u.name ? u.name.charAt(0) : "";
+
+  const railName = document.getElementById("accountName");
+  if (railName && u) railName.textContent = `${u.name}さん`;
+  const railInitial = document.getElementById("accountInitial");
+  if (railInitial && u && u.name) railInitial.textContent = u.name.charAt(0);
+  const railGoal = document.getElementById("accountGoal");
+  if (railGoal && selectedIdeal) railGoal.textContent = `${selectedIdeal.label}をめざす`;
+
+  renderNutriCard();
+  renderRecentList();
+  renderTargetCard();
+  renderHomeStats();
+}
+
+// ---- 今日の栄養（リング＋PFCバー） ----
+function renderNutriCard() {
+  const ring = document.getElementById("nutriRing");
+  if (!ring) return;
+  const totals = dayTotals(todayStr());
+  const targets = computeTargets();
+  const cal = Math.round(totals.cal);
+
+  const goalLabel = document.getElementById("nutriGoalLabel");
+  if (goalLabel) goalLabel.textContent = targets ? `目標 ${fmtNum(targets.cal)} kcal` : "目標 — kcal";
+
+  const R = 52;
+  const CIRC = 2 * Math.PI * R;
+  const pct = targets ? Math.min(1, cal / targets.cal) : 0;
+  const over = targets && cal > targets.cal;
+  ring.innerHTML = `
+    <svg viewBox="0 0 120 120" class="ring-svg" role="img" aria-label="今日の摂取カロリー">
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--track)" stroke-width="14" />
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="${over ? "var(--coral)" : "var(--green)"}" stroke-width="14"
+        stroke-linecap="round" stroke-dasharray="${(pct * CIRC).toFixed(1)} ${CIRC.toFixed(1)}" transform="rotate(-90 60 60)" />
+    </svg>
+    <span class="ring-center"><strong>${fmtNum(cal)}</strong><small>kcal 摂取</small></span>`;
+
+  const macros = document.getElementById("nutriMacros");
+  if (macros) {
+    const rows = [
+      { name: "たんぱく質", cls: "p", cur: Math.round(totals.p), tgt: targets ? targets.p : null },
+      { name: "脂質", cls: "f", cur: Math.round(totals.f), tgt: targets ? targets.f : null },
+      { name: "炭水化物", cls: "c", cur: Math.round(totals.c), tgt: targets ? targets.c : null },
+    ];
+    macros.innerHTML = rows
+      .map((r) => {
+        const w = r.tgt ? Math.min(100, Math.round((r.cur / r.tgt) * 100)) : 0;
+        const label = r.tgt != null ? `${r.cur} / ${r.tgt} g` : `${r.cur} g`;
+        return `<div class="pfc-row"><div class="pfc-top"><span class="pfc-name">${r.name}</span><span class="pfc-val">${label}</span></div><div class="pfc-bar"><span class="pfc-fill ${r.cls}" style="width:${w}%"></span></div></div>`;
+      })
+      .join("");
   }
 
-  summary.innerHTML = `
-    <p><strong>${escapeHtml(profile.age)}歳 / ${escapeHtml(profile.gender)}</strong></p>
-    <p>身長：${escapeHtml(profile.height)}cm</p>
-    <p>体重：${escapeHtml(profile.weight)}kg</p>
-    <p>目標：${escapeHtml(profile.goal)}</p>
-    <p>理想体型：${selectedIdeal ? escapeHtml(selectedIdeal.label) : "未選択"}</p>
-  `;
+  const foot = document.getElementById("nutriFoot");
+  if (foot) {
+    if (!targets) {
+      foot.innerHTML = "プロフィールを登録すると、目標カロリーを自動計算します。";
+    } else {
+      const rest = targets.cal - cal;
+      foot.innerHTML =
+        rest >= 0
+          ? `あと <strong>${fmtNum(rest)} kcal</strong> 記録できます。${cal === 0 ? "まずは1食から記録しましょう。" : "ペースは順調です。"}`
+          : `目標を <strong class="over">${fmtNum(-rest)} kcal</strong> 超えています。次の食事は軽めに調整しましょう。`;
+    }
+  }
+}
 
-  title.textContent = `${profile.goal}ために、今日の記録を始めましょう`;
+// ---- 最近の記録 ----
+function renderRecentList() {
+  const box = document.getElementById("recentList");
+  if (!box) return;
+  const SLOT_LABEL = { breakfast: "朝食", lunch: "昼食", dinner: "夕食", snack: "間食" };
+  const items = [];
+  meals.forEach((m) =>
+    items.push({
+      date: m.date,
+      id: Number(m.id) || 0,
+      icon: "i-meal",
+      cls: "ri-meal",
+      title: `${SLOT_LABEL[m.slot] || "食事"}を記録`,
+      sub: `${m.name}${(Number(m.qty) || 1) > 1 ? ` ×${m.qty}` : ""} ・ ${itemCal(m)} kcal`,
+    })
+  );
+  workouts.forEach((w) =>
+    items.push({
+      date: w.date,
+      id: Number(w.id) || 0,
+      icon: "i-dumbbell",
+      cls: "ri-workout",
+      title: `${w.bodyPart || "全身"}のトレーニング`,
+      sub:
+        w.kind === "c"
+          ? `${w.name} ・ ${Number(w.minutes) || 0}分`
+          : `${w.name} ${Number(w.weight) ? `${Number(w.weight)}kg × ` : ""}${Number(w.reps) || 0} × ${Number(w.sets) || 0}セット`,
+    })
+  );
+  items.sort((a, b) => (a.date === b.date ? b.id - a.id : a.date < b.date ? 1 : -1));
+  const top = items.slice(0, 5);
+  if (!top.length) {
+    box.innerHTML = `<div class="recent-empty">まだ記録がありません。「食事を記録」から始めましょう。</div>`;
+    return;
+  }
+  const today = todayStr();
+  box.innerHTML = top
+    .map(
+      (it) => `
+    <div class="recent-item">
+      <span class="ri-ico ${it.cls}"><svg class="icon"><use href="#${it.icon}" /></svg></span>
+      <span class="ri-main"><strong>${escapeHtml(it.title)}</strong><small>${escapeHtml(it.sub)}</small></span>
+      <span class="ri-time">${it.date === today ? "今日" : escapeHtml(String(it.date).slice(5).replace("-", "/"))}</span>
+    </div>`
+    )
+    .join("");
+}
 
-  renderHomeConsole();
+// ---- めざす体型カード ----
+function renderTargetCard() {
+  const info = document.getElementById("targetInfo");
+  if (!info) return;
+  const label = selectedIdeal ? selectedIdeal.label : "まだ選択されていません";
+  const goalText = profile && profile.goal ? profile.goal : "プロフィールを登録しましょう";
+  const w = profile && profile.weight ? `${profile.weight}kg` : "—";
+  const targets = computeTargets();
+  info.innerHTML = `
+    <strong class="target-name">${escapeHtml(label)}</strong>
+    <small class="target-goal">${escapeHtml(goalText)}</small>
+    <div class="target-meta">
+      <span>現在 <strong>${escapeHtml(String(w))}</strong></span>
+      <span>目標 <strong>${targets ? fmtNum(targets.cal) : "—"}</strong> kcal/日</span>
+    </div>`;
+  const fig = document.querySelector("#homeScreen .target-fig");
+  if (fig) fig.dataset.tone = goalType();
+}
+
+// ---- スタッツ（2×2） ----
+function renderHomeStats() {
+  const el = document.getElementById("homeStats");
+  if (!el) return;
+  const dates = lastNDates(7).map(ymd);
+  const woDays = new Set(workouts.filter((x) => dates.includes(x.date)).map((x) => x.date));
+  let sum = 0;
+  let days = 0;
+  dates.forEach((d) => {
+    const c = dayTotals(d).cal;
+    if (c > 0) {
+      sum += c;
+      days++;
+    }
+  });
+  const avg = days ? Math.round(sum / days) : 0;
+  const todayCal = Math.round(dayTotals(todayStr()).cal);
+  const tiles = [
+    { v: currentStreak(), u: "日", l: "連続記録", accent: true },
+    { v: woDays.size, u: "回", l: "今週のトレ" },
+    { v: fmtNum(todayCal), u: "kcal", l: "今日の摂取", accent: true },
+    { v: fmtNum(avg), u: "kcal", l: "7日平均" },
+  ];
+  el.innerHTML = tiles
+    .map(
+      (t) =>
+        `<div class="stat-card"><div class="stat-v${t.accent ? " accent" : ""}">${t.v}<span>${t.u}</span></div><div class="stat-l">${t.l}</div></div>`
+    )
+    .join("");
 }
 
 // ======================================================
@@ -1243,13 +1414,13 @@ function setupMealScreen() {
 
 // ---- 部位カラー（人体図ハイライト & ラベル色）----
 const PART_COLOR = {
-  "胸": ["#ff6b5a", "rgba(255,107,90,0.45)"],
-  "背中": ["#35e2cd", "rgba(53,226,205,0.45)"],
-  "肩": ["#7f97d9", "rgba(127,151,217,0.5)"],
-  "腕": ["#e8b34b", "rgba(232,179,75,0.5)"],
-  "脚": ["#8fd14f", "rgba(143,209,79,0.5)"],
-  "腹筋・体幹": ["#c58bff", "rgba(197,139,255,0.5)"],
-  "有酸素": ["#ff5da2", "rgba(255,93,162,0.5)"],
+  "胸": ["#e07a5f", "rgba(224,122,95,0.4)"],
+  "背中": ["#35946a", "rgba(53,148,106,0.4)"],
+  "肩": ["#6aa6c4", "rgba(106,166,196,0.45)"],
+  "腕": ["#d99b57", "rgba(217,155,87,0.45)"],
+  "脚": ["#7f9c4e", "rgba(127,156,78,0.45)"],
+  "腹筋・体幹": ["#9b7fc4", "rgba(155,127,196,0.45)"],
+  "有酸素": ["#d97a94", "rgba(217,122,148,0.45)"],
 };
 const PART_CLASS = {
   "胸": "pc-chest", "背中": "pc-back", "肩": "pc-shoulder", "腕": "pc-arm",
@@ -1358,6 +1529,7 @@ function renderExList() {
         <span class="ex-freq">${f || ""}</span>
         <button type="button" class="ex-ic ex-bm${bm ? " on" : ""}" data-act="bm" aria-label="ブックマーク"><svg class="icon"><use href="#i-book"></use></svg></button>
         <button type="button" class="ex-ic" data-act="info" aria-label="詳細"><svg class="icon"><use href="#i-info"></use></svg></button>
+        <button type="button" class="ex-ic ex-add" data-act="quick" aria-label="この種目を記録待ちに追加"><svg class="icon"><use href="#i-plus"></use></svg></button>
       </div>`;
     })
     .join("");
@@ -1519,6 +1691,19 @@ function setupExercisePicker() {
     if (act) {
       if (act.dataset.act === "bm") { toggleBookmark(id); return; }
       if (act.dataset.act === "info") { openExModal(id); return; }
+      if (act.dataset.act === "quick") {
+        const ex = exById(id);
+        if (ex) {
+          pendingEntries.push({
+            pid: makeId("p_"), exId: ex.id, name: ex.n, part: ex.c, sub: ex.s,
+            kind: exIsCardio(ex) ? "c" : "w", custom: false,
+          });
+          renderPending();
+          const pl = document.getElementById("pendingList");
+          if (pl && pl.scrollIntoView) pl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
     }
     if (exState.sel.has(id)) exState.sel.delete(id);
     else exState.sel.add(id);
@@ -1543,7 +1728,7 @@ function setupExercisePicker() {
     renderExList();
     renderPending();
     const pl = document.getElementById("pendingList");
-    if (pl) pl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (pl && pl.scrollIntoView) pl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 
   // カスタム種目（検索ヒットなし時）
@@ -1690,9 +1875,9 @@ function renderDashPfc(dates) {
   P /= n; F /= n; C /= n;
   const avgCal = Math.round(cal / n);
   const segs = [
-    { label: "P たんぱく質", g: Math.round(P), cal: P * 4, color: "#0d9488" },
-    { label: "F 脂質", g: Math.round(F), cal: F * 9, color: "#ef4444" },
-    { label: "C 炭水化物", g: Math.round(C), cal: C * 4, color: "#3b82f6" },
+    { label: "P たんぱく質", g: Math.round(P), cal: P * 4, color: "#35946a" },
+    { label: "F 脂質", g: Math.round(F), cal: F * 9, color: "#d99b57" },
+    { label: "C 炭水化物", g: Math.round(C), cal: C * 4, color: "#6aa6c4" },
   ];
   const tot = segs.reduce((s, x) => s + x.cal, 0) || 1;
   ring.innerHTML = donutSVG(segs.map((s) => ({ label: s.label, value: s.cal, color: s.color })), `${avgCal}`, "kcal/日");

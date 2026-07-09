@@ -3,18 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BodyMake Support — PHYSIQUE OS</title>
-
-  <!-- テーマを描画前に適用（ちらつき防止）: pop=ポップ / hud=クラシック -->
-  <script>
-    try { document.documentElement.dataset.theme = localStorage.getItem("bm_theme") || "pop"; }
-    catch (e) { document.documentElement.dataset.theme = "pop"; }
-  </script>
+  <title>BodyMake — 体づくりサポート</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Mochiy+Pop+P+One&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -45,15 +39,32 @@
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M7 3.5h10V20l-5-3.8L7 20z" /></symbol>
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.5v.2" /></symbol>
 
-    <!-- 筋肉ハイライト人体図（前面） -->
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M15.8 15.8 21 21" /></symbol>
+
+    <!-- シンプル人体シルエット（めざす体型カード用） -->
+    <symbol id="fig-body" viewBox="0 0 120 240">
+      <g fill="currentColor" opacity="0.16">
+        <circle cx="60" cy="19" r="11" /><path d="M54 29h12v8H54z" /><path d="M38 42h44l-4 66H42z" />
+        <path d="M44 108h32l-2 16H46z" /><rect x="23" y="49" width="13" height="36" rx="6" /><rect x="84" y="49" width="13" height="36" rx="6" />
+        <rect x="21" y="87" width="11" height="33" rx="5" /><rect x="88" y="87" width="11" height="33" rx="5" />
+        <circle cx="26" cy="126" r="5" /><circle cx="94" cy="126" r="5" />
+        <rect x="43" y="122" width="16" height="50" rx="7" /><rect x="61" y="122" width="16" height="50" rx="7" />
+        <rect x="45" y="174" width="13" height="44" rx="6" /><rect x="62" y="174" width="13" height="44" rx="6" />
+        <path d="M44 218h15v6H44z" /><path d="M61 218h15v6H61z" />
+      </g>
+      <g fill="currentColor">
+        <path d="M45 48 Q60 43 75 48 L73 66 Q60 73 47 66 Z" />
+        <rect x="52" y="72" width="16" height="32" rx="4" />
+        <rect x="44" y="124" width="14" height="44" rx="6" /><rect x="62" y="124" width="14" height="44" rx="6" />
+      </g>
+    </symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5" /></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" /></symbol>
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 13c.5-1 .3-2 0-2.6 1.8 1 3 3 3 5.4a5 5 0 0 1-10 0c0-3.4 2.6-4.6 5-7.8Z" /></symbol>
     <symbol id="fig-front" viewBox="0 0 120 240">
-      <g style="fill:#141c29;stroke:#3a495e;stroke-width:1.5" stroke-linejoin="round">
+      <g style="fill:var(--fig-base,#e9ede4);stroke:var(--fig-line,#d4dbcd);stroke-width:1.5" stroke-linejoin="round">
         <circle cx="60" cy="19" r="11" />
         <path d="M54 29h12v8H54z" />
         <path d="M38 42h44l-4 66H42z" />
@@ -70,28 +81,28 @@
         <path d="M44 218h15v6H44z" /><path d="M61 218h15v6H61z" />
       </g>
       <g stroke="none">
-        <ellipse cx="43" cy="49" rx="7" ry="6" style="fill:var(--m-fdelt,#222e41)" />
-        <ellipse cx="77" cy="49" rx="7" ry="6" style="fill:var(--m-fdelt,#222e41)" />
-        <ellipse cx="31" cy="52" rx="6" ry="9" style="fill:var(--m-sdelt,#222e41)" />
-        <ellipse cx="89" cy="52" rx="6" ry="9" style="fill:var(--m-sdelt,#222e41)" />
-        <path d="M45 48 Q60 43 75 48 L73 66 Q60 73 47 66 Z" style="fill:var(--m-chest,#222e41)" />
-        <rect x="52" y="72" width="16" height="32" rx="4" style="fill:var(--m-abs,#222e41)" />
-        <rect x="44" y="74" width="6" height="28" rx="3" style="fill:var(--m-obliques,#222e41)" />
-        <rect x="70" y="74" width="6" height="28" rx="3" style="fill:var(--m-obliques,#222e41)" />
-        <rect x="25" y="53" width="9" height="28" rx="4" style="fill:var(--m-biceps,#222e41)" />
-        <rect x="86" y="53" width="9" height="28" rx="4" style="fill:var(--m-biceps,#222e41)" />
-        <rect x="22" y="89" width="9" height="27" rx="4" style="fill:var(--m-forearm,#222e41)" />
-        <rect x="89" y="89" width="9" height="27" rx="4" style="fill:var(--m-forearm,#222e41)" />
-        <rect x="44" y="124" width="14" height="44" rx="6" style="fill:var(--m-quads,#222e41)" />
-        <rect x="62" y="124" width="14" height="44" rx="6" style="fill:var(--m-quads,#222e41)" />
-        <rect x="55.5" y="126" width="4" height="26" rx="2" style="fill:var(--m-adductors,#222e41)" />
-        <rect x="60.5" y="126" width="4" height="26" rx="2" style="fill:var(--m-adductors,#222e41)" />
+        <ellipse cx="43" cy="49" rx="7" ry="6" style="fill:var(--m-fdelt,var(--fig-muscle,#dbe1d4))" />
+        <ellipse cx="77" cy="49" rx="7" ry="6" style="fill:var(--m-fdelt,var(--fig-muscle,#dbe1d4))" />
+        <ellipse cx="31" cy="52" rx="6" ry="9" style="fill:var(--m-sdelt,var(--fig-muscle,#dbe1d4))" />
+        <ellipse cx="89" cy="52" rx="6" ry="9" style="fill:var(--m-sdelt,var(--fig-muscle,#dbe1d4))" />
+        <path d="M45 48 Q60 43 75 48 L73 66 Q60 73 47 66 Z" style="fill:var(--m-chest,var(--fig-muscle,#dbe1d4))" />
+        <rect x="52" y="72" width="16" height="32" rx="4" style="fill:var(--m-abs,var(--fig-muscle,#dbe1d4))" />
+        <rect x="44" y="74" width="6" height="28" rx="3" style="fill:var(--m-obliques,var(--fig-muscle,#dbe1d4))" />
+        <rect x="70" y="74" width="6" height="28" rx="3" style="fill:var(--m-obliques,var(--fig-muscle,#dbe1d4))" />
+        <rect x="25" y="53" width="9" height="28" rx="4" style="fill:var(--m-biceps,var(--fig-muscle,#dbe1d4))" />
+        <rect x="86" y="53" width="9" height="28" rx="4" style="fill:var(--m-biceps,var(--fig-muscle,#dbe1d4))" />
+        <rect x="22" y="89" width="9" height="27" rx="4" style="fill:var(--m-forearm,var(--fig-muscle,#dbe1d4))" />
+        <rect x="89" y="89" width="9" height="27" rx="4" style="fill:var(--m-forearm,var(--fig-muscle,#dbe1d4))" />
+        <rect x="44" y="124" width="14" height="44" rx="6" style="fill:var(--m-quads,var(--fig-muscle,#dbe1d4))" />
+        <rect x="62" y="124" width="14" height="44" rx="6" style="fill:var(--m-quads,var(--fig-muscle,#dbe1d4))" />
+        <rect x="55.5" y="126" width="4" height="26" rx="2" style="fill:var(--m-adductors,var(--fig-muscle,#dbe1d4))" />
+        <rect x="60.5" y="126" width="4" height="26" rx="2" style="fill:var(--m-adductors,var(--fig-muscle,#dbe1d4))" />
       </g>
     </symbol>
 
     <!-- 筋肉ハイライト人体図（背面） -->
     <symbol id="fig-back" viewBox="0 0 120 240">
-      <g style="fill:#141c29;stroke:#3a495e;stroke-width:1.5" stroke-linejoin="round">
+      <g style="fill:var(--fig-base,#e9ede4);stroke:var(--fig-line,#d4dbcd);stroke-width:1.5" stroke-linejoin="round">
         <circle cx="60" cy="19" r="11" />
         <path d="M54 29h12v8H54z" />
         <path d="M38 42h44l-4 66H42z" />
@@ -108,66 +119,51 @@
         <path d="M44 218h15v6H44z" /><path d="M61 218h15v6H61z" />
       </g>
       <g stroke="none">
-        <path d="M46 34 L74 34 L82 46 L60 52 L38 46 Z" style="fill:var(--m-traps,#222e41)" />
-        <ellipse cx="35" cy="50" rx="7" ry="6" style="fill:var(--m-rdelt,#222e41)" />
-        <ellipse cx="85" cy="50" rx="7" ry="6" style="fill:var(--m-rdelt,#222e41)" />
-        <rect x="50" y="54" width="20" height="16" rx="4" style="fill:var(--m-midback,#222e41)" />
-        <path d="M42 52 L54 58 L51 92 L41 80 Z" style="fill:var(--m-lats,#222e41)" />
-        <path d="M78 52 L66 58 L69 92 L79 80 Z" style="fill:var(--m-lats,#222e41)" />
-        <rect x="50" y="88" width="20" height="17" rx="4" style="fill:var(--m-lowback,#222e41)" />
-        <rect x="25" y="53" width="9" height="28" rx="4" style="fill:var(--m-triceps,#222e41)" />
-        <rect x="86" y="53" width="9" height="28" rx="4" style="fill:var(--m-triceps,#222e41)" />
-        <path d="M46 107 Q60 102 74 107 L74 120 Q60 127 46 120 Z" style="fill:var(--m-glutes,#222e41)" />
-        <rect x="44" y="124" width="14" height="44" rx="6" style="fill:var(--m-hams,#222e41)" />
-        <rect x="62" y="124" width="14" height="44" rx="6" style="fill:var(--m-hams,#222e41)" />
-        <rect x="46" y="176" width="11" height="32" rx="5" style="fill:var(--m-calves,#222e41)" />
-        <rect x="63" y="176" width="11" height="32" rx="5" style="fill:var(--m-calves,#222e41)" />
+        <path d="M46 34 L74 34 L82 46 L60 52 L38 46 Z" style="fill:var(--m-traps,var(--fig-muscle,#dbe1d4))" />
+        <ellipse cx="35" cy="50" rx="7" ry="6" style="fill:var(--m-rdelt,var(--fig-muscle,#dbe1d4))" />
+        <ellipse cx="85" cy="50" rx="7" ry="6" style="fill:var(--m-rdelt,var(--fig-muscle,#dbe1d4))" />
+        <rect x="50" y="54" width="20" height="16" rx="4" style="fill:var(--m-midback,var(--fig-muscle,#dbe1d4))" />
+        <path d="M42 52 L54 58 L51 92 L41 80 Z" style="fill:var(--m-lats,var(--fig-muscle,#dbe1d4))" />
+        <path d="M78 52 L66 58 L69 92 L79 80 Z" style="fill:var(--m-lats,var(--fig-muscle,#dbe1d4))" />
+        <rect x="50" y="88" width="20" height="17" rx="4" style="fill:var(--m-lowback,var(--fig-muscle,#dbe1d4))" />
+        <rect x="25" y="53" width="9" height="28" rx="4" style="fill:var(--m-triceps,var(--fig-muscle,#dbe1d4))" />
+        <rect x="86" y="53" width="9" height="28" rx="4" style="fill:var(--m-triceps,var(--fig-muscle,#dbe1d4))" />
+        <path d="M46 107 Q60 102 74 107 L74 120 Q60 127 46 120 Z" style="fill:var(--m-glutes,var(--fig-muscle,#dbe1d4))" />
+        <rect x="44" y="124" width="14" height="44" rx="6" style="fill:var(--m-hams,var(--fig-muscle,#dbe1d4))" />
+        <rect x="62" y="124" width="14" height="44" rx="6" style="fill:var(--m-hams,var(--fig-muscle,#dbe1d4))" />
+        <rect x="46" y="176" width="11" height="32" rx="5" style="fill:var(--m-calves,var(--fig-muscle,#dbe1d4))" />
+        <rect x="63" y="176" width="11" height="32" rx="5" style="fill:var(--m-calves,var(--fig-muscle,#dbe1d4))" />
       </g>
     </symbol>
   </svg>
 
   <div class="app-shell">
-    <!-- ===== top status bar (global) ===== -->
-    <header class="topbar">
-      <a class="brand" href="#" aria-label="BodyMake Support ホーム">
-        <span class="brand-mark"><svg class="icon"><use href="#i-mark" /></svg></span>
-        <span class="brand-text">
-          <span class="brand-name">BodyMake</span>
-          <span class="brand-kicker">PHYSIQUE // SUPPORT SYSTEM</span>
-        </span>
-      </a>
-
-      <div class="top-status">
-        <button class="theme-toggle" id="themeToggle" type="button" aria-label="デザインを切り替え">
-          <span class="tt-emoji" id="themeEmoji">🎨</span><span class="tt-label" id="themeLabel">ポップ</span>
-        </button>
-        <span class="status-chip ghost-chip">RESEARCH BUILD v0.4</span>
-        <span class="status-chip authed-only"><span class="live-dot"></span>SESSION ACTIVE</span>
-        <button class="account-chip authed-only" data-go="settingsScreen" aria-label="アカウント設定">
-          <svg class="icon"><use href="#i-user" /></svg>
-          <span id="accountName"></span>
-        </button>
-        <button class="ghost-btn authed-only" data-go="settingsScreen" aria-label="設定">
-          <svg class="icon"><use href="#i-gear" /></svg>
-          <span>設定</span>
-        </button>
-      </div>
-    </header>
-
     <div class="app-body">
       <!-- ===== side rail (global nav; hidden during auth/consent/onboarding) ===== -->
       <aside class="app-rail" aria-label="メインナビゲーション">
+        <div class="rail-brand">
+          <span class="brand-mark"><svg viewBox="0 0 120 240" aria-hidden="true"><use href="#fig-body" /></svg></span>
+          <span class="brand-text">
+            <span class="brand-name">BodyMake</span>
+            <span class="brand-kicker">体づくりサポート</span>
+          </span>
+        </div>
         <nav class="rail-nav">
           <button class="nav-btn active" data-go="homeScreen"><svg class="icon"><use href="#i-home" /></svg><span>ホーム</span></button>
-          <button class="nav-btn" data-go="mealScreen"><svg class="icon"><use href="#i-meal" /></svg><span>食事</span></button>
-          <button class="nav-btn" data-go="workoutScreen"><svg class="icon"><use href="#i-dumbbell" /></svg><span>筋トレ</span></button>
-          <button class="nav-btn" data-go="dashboardScreen"><svg class="icon"><use href="#i-chart" /></svg><span>進捗</span></button>
+          <button class="nav-btn" data-go="mealScreen"><svg class="icon"><use href="#i-meal" /></svg><span>食事<i class="lx">管理</i></span></button>
+          <button class="nav-btn" data-go="workoutScreen"><svg class="icon"><use href="#i-dumbbell" /></svg><span>筋トレ<i class="lx">記録</i></span></button>
+          <button class="nav-btn" data-go="dashboardScreen"><svg class="icon"><use href="#i-chart" /></svg><span>進捗<i class="lx">・振り返り</i></span></button>
           <button class="nav-btn" data-go="communityScreen"><svg class="icon"><use href="#i-chat" /></svg><span>掲示板</span></button>
-          <button class="nav-btn rail-settings" data-go="settingsScreen"><svg class="icon"><use href="#i-gear" /></svg><span>設定</span></button>
         </nav>
         <div class="rail-foot">
-          <span class="rail-code">PHYSIQUE OS</span>
-          <span class="rail-note">logs: local storage</span>
+          <button class="rail-reset" data-go="profileScreen"><svg class="icon"><use href="#i-gear" /></svg><span>目標を再設定</span></button>
+          <button class="rail-user" data-go="settingsScreen" aria-label="アカウント設定">
+            <span class="rail-avatar" id="accountInitial"></span>
+            <span class="rail-user-text">
+              <strong id="accountName"></strong>
+              <small id="accountGoal">設定・データ管理</small>
+            </span>
+          </button>
         </div>
       </aside>
 
@@ -179,7 +175,7 @@
               <p class="eyebrow">ACCESS // ACCOUNT</p>
             </div>
 
-            <h2>アカウントで記録を残す。</h2>
+            <h2>アカウントで<br />記録を残しましょう</h2>
             <p class="lead">
               登録すると、プロフィールや記録がこの端末のローカルDBに<strong>アカウント単位</strong>で保存されます。
             </p>
@@ -267,9 +263,9 @@
               </ol>
             </div>
 
-            <h2>まず、あなたのスペックを登録する。</h2>
+            <h2>まず、あなたのことを<br />教えてください</h2>
             <p class="lead">
-              身長・体重・性別・年齢・目標を入力します。この値が、目標体型の生成とフィードバックのベースになります。
+              身長・体重・性別・年齢・目標を入力します。目標体型の提案とフィードバックのもとになります。
             </p>
 
             <div class="form-grid">
@@ -320,15 +316,15 @@
               </ol>
             </div>
 
-            <h2>現在の身体をスキャンする。</h2>
+            <h2>今の体型を<br />撮影しましょう</h2>
             <p class="lead">
-              いまの体型写真を登録します。今回はAI加工は行わず、次の画面で「AI生成イメージ風」の候補を提示します。
+              写真はこの端末内でのみ処理されます。次の画面で目標体型のイメージを提案します。
             </p>
 
             <label class="upload-box">
               <input type="file" id="bodyPhotoInput" accept="image/*" />
               <svg class="icon upload-icon"><use href="#i-camera" /></svg>
-              <span>クリックして写真を選択</span>
+              <span>タップして写真を選択</span>
               <small>JPG / PNG · ブラウザ内でのみ処理</small>
             </label>
 
@@ -355,9 +351,9 @@
               </ol>
             </div>
 
-            <h2>目指す身体を、ロックオンする。</h2>
+            <h2>めざす体型を<br />選びましょう</h2>
             <p class="lead">
-              今回は本物のAI画像生成ではなく、アップロード画像を使ったモック表示です。本実装ではここをAI画像生成APIに置き換えます。
+              あとから変更できます。（今回はAI画像生成のかわりに、アップロード画像を使ったモック表示です）
             </p>
 
             <div class="ideal-grid">
@@ -368,7 +364,7 @@
                   <h3>絞った体型</h3>
                 </div>
                 <p>脂肪を落として、引き締まった見た目を目指す方向け。</p>
-                <button class="select-ideal-btn" data-ideal="cut">この体型でロック</button>
+                <button class="select-ideal-btn" data-ideal="cut">この体型をめざす</button>
               </article>
 
               <article class="ideal-card" data-ideal="bulk">
@@ -378,7 +374,7 @@
                   <h3>筋肥大した体型</h3>
                 </div>
                 <p>筋肉量を増やして、身体を大きく見せたい方向け。</p>
-                <button class="select-ideal-btn" data-ideal="bulk">この体型でロック</button>
+                <button class="select-ideal-btn" data-ideal="bulk">この体型をめざす</button>
               </article>
 
               <article class="ideal-card" data-ideal="maintain">
@@ -388,7 +384,7 @@
                   <h3>健康的に維持する体型</h3>
                 </div>
                 <p>無理なく健康管理を続けながら、今の体型を整えたい方向け。</p>
-                <button class="select-ideal-btn" data-ideal="maintain">この体型でロック</button>
+                <button class="select-ideal-btn" data-ideal="maintain">この体型をめざす</button>
               </article>
             </div>
 
@@ -403,73 +399,59 @@
 
         <!-- 4. ホーム -->
         <section id="homeScreen" class="screen">
-          <div class="console-head">
-            <p class="eyebrow">DASHBOARD / HOME</p>
-            <h2 id="welcomeTitle">今日も記録を始めましょう</h2>
+          <div class="home-head">
+            <div class="home-greet">
+              <p class="home-date" id="homeDate"></p>
+              <h2 id="welcomeTitle">今日も記録を始めましょう</h2>
+            </div>
+            <div class="home-head-actions">
+              <button class="primary-btn head-act" data-go="mealScreen"><svg class="icon"><use href="#i-meal" /></svg><span>食事を記録</span></button>
+              <button class="secondary-btn head-act" data-go="workoutScreen"><svg class="icon"><use href="#i-dumbbell" /></svg><span>筋トレを記録</span></button>
+              <button class="home-avatar" id="homeAvatar" data-go="settingsScreen" aria-label="アカウント設定"></button>
+            </div>
           </div>
 
-          <!-- ホーム・テレメトリコンソール（直近7日の可視化） -->
-          <div class="panel console-panel">
-            <div class="panel-head">
-              <span class="panel-label">TELEMETRY // 直近7日コンソール</span>
-              <span class="dot"></span>
-            </div>
-            <div class="tele-stats" id="teleStats"></div>
-            <div class="tele-charts">
-              <div class="tele-chart">
-                <div class="tele-chart-head">
-                  <span class="tele-title"><svg class="icon"><use href="#i-flame" /></svg>摂取カロリー</span>
-                  <span class="tele-sub" id="teleCalSub">7日平均 —</span>
+          <div class="home-grid">
+            <div class="home-main">
+              <!-- 今日の栄養 -->
+              <div class="panel nutri-panel">
+                <div class="nutri-head">
+                  <span class="card-title">今日の栄養</span>
+                  <span class="card-sub" id="nutriGoalLabel">目標 — kcal</span>
                 </div>
-                <div class="tele-plot" id="teleCalPlot"></div>
-              </div>
-              <div class="tele-chart">
-                <div class="tele-chart-head">
-                  <span class="tele-title"><svg class="icon"><use href="#i-dumbbell" /></svg>トレーニング量</span>
-                  <span class="tele-sub" id="teleVolSub">7日合計 —</span>
+                <div class="nutri-body">
+                  <div class="nutri-ring" id="nutriRing"></div>
+                  <div class="nutri-macros" id="nutriMacros"></div>
                 </div>
-                <div class="tele-plot" id="teleVolPlot"></div>
+                <div class="nutri-foot" id="nutriFoot">プロフィールを登録すると、目標カロリーを自動計算します。</div>
+              </div>
+
+              <!-- 最近の記録 -->
+              <div class="panel recent-panel">
+                <div class="nutri-head">
+                  <span class="card-title">最近の記録</span>
+                  <button class="link-btn" data-go="dashboardScreen">すべて見る</button>
+                </div>
+                <div class="recent-list" id="recentList"></div>
               </div>
             </div>
-          </div>
 
-          <div class="home-top">
-            <div class="panel intro-panel">
-              <div class="panel-head"><span class="panel-label">TODAY // BRIEFING</span><svg class="icon panel-ico"><use href="#i-pulse" /></svg></div>
-              <p>食事・筋トレ・活動を記録して、目標体型に近づくための行動を可視化していきましょう。まずは1件、今日の記録から。</p>
-              <div class="quick-row">
-                <button class="chip-btn" data-go="mealScreen"><svg class="icon"><use href="#i-meal" /></svg>食事を記録</button>
-                <button class="chip-btn" data-go="workoutScreen"><svg class="icon"><use href="#i-dumbbell" /></svg>筋トレを記録</button>
+            <div class="home-side">
+              <!-- めざす体型 -->
+              <div class="panel target-panel">
+                <div class="nutri-head">
+                  <span class="card-sub">めざす体型</span>
+                  <button class="link-btn" data-go="idealScreen">編集</button>
+                </div>
+                <div class="target-body">
+                  <span class="target-fig"><svg viewBox="0 0 120 240" aria-hidden="true"><use href="#fig-body" /></svg></span>
+                  <div class="target-info" id="targetInfo"></div>
+                </div>
               </div>
-            </div>
 
-            <div class="panel member-panel">
-              <div class="panel-head"><span class="panel-label">OPERATOR</span><svg class="icon panel-ico"><use href="#i-user" /></svg></div>
-              <div class="profile-summary" id="profileSummary"></div>
+              <!-- スタッツ -->
+              <div class="home-stats" id="homeStats"></div>
             </div>
-          </div>
-
-          <div class="home-menu">
-            <button class="menu-card" data-go="mealScreen">
-              <span class="menu-icon"><svg class="icon"><use href="#i-meal" /></svg></span>
-              <span class="menu-body"><span class="menu-tag">Meal</span><strong>食事管理</strong><small>摂取カロリー・タンパク質・メモ</small></span>
-              <span class="menu-arrow"><svg class="icon"><use href="#i-arrow" /></svg></span>
-            </button>
-            <button class="menu-card" data-go="workoutScreen">
-              <span class="menu-icon"><svg class="icon"><use href="#i-dumbbell" /></svg></span>
-              <span class="menu-body"><span class="menu-tag">Workout</span><strong>筋トレ記録</strong><small>種目・重量・回数・セット数</small></span>
-              <span class="menu-arrow"><svg class="icon"><use href="#i-arrow" /></svg></span>
-            </button>
-            <button class="menu-card" data-go="dashboardScreen">
-              <span class="menu-icon"><svg class="icon"><use href="#i-chart" /></svg></span>
-              <span class="menu-body"><span class="menu-tag">Data</span><strong>進捗・振り返り</strong><small>記録の一覧とフィードバック</small></span>
-              <span class="menu-arrow"><svg class="icon"><use href="#i-arrow" /></svg></span>
-            </button>
-            <button class="menu-card" data-go="communityScreen">
-              <span class="menu-icon"><svg class="icon"><use href="#i-chat" /></svg></span>
-              <span class="menu-body"><span class="menu-tag">Community</span><strong>掲示板</strong><small>悩みや記録をみんなで共有</small></span>
-              <span class="menu-arrow"><svg class="icon"><use href="#i-arrow" /></svg></span>
-            </button>
           </div>
         </section>
 
@@ -484,17 +466,17 @@
             <!-- date strip -->
             <div class="panel day-strip">
               <button class="day-nav" id="mealPrevDay" aria-label="前日"><svg class="icon"><use href="#i-arrow" /></svg></button>
-              <label class="day-pick"><span class="panel-label">DATE // 記録日</span><input type="date" id="mealDate" /></label>
+              <label class="day-pick"><span class="panel-label">記録日</span><input type="date" id="mealDate" /></label>
               <button class="day-nav next" id="mealNextDay" aria-label="翌日"><svg class="icon"><use href="#i-arrow" /></svg></button>
             </div>
 
             <!-- calorie / PFC summary -->
             <div class="panel calo-panel">
               <div class="panel-head">
-                <span class="panel-label">DAILY BALANCE // 収支</span>
+                <span class="panel-label">今日の収支</span>
                 <div class="seg-tabs">
-                  <button class="seg-tab active" data-calotab="intake" type="button">摂取カロリー</button>
-                  <button class="seg-tab" data-calotab="pfc" type="button">PFCバランス</button>
+                  <button class="seg-tab active" data-calotab="intake" type="button">カロリー</button>
+                  <button class="seg-tab" data-calotab="pfc" type="button">PFC</button>
                 </div>
               </div>
               <div data-caloview="intake">
@@ -526,7 +508,7 @@
 
             <div class="content-grid workout-grid">
               <div class="panel picker-panel">
-                <div class="panel-head"><span class="panel-label">EXERCISE LIBRARY</span><span class="ex-count" id="exCount"></span></div>
+                <div class="panel-head"><span class="panel-label">種目ライブラリ</span><span class="ex-count" id="exCount"></span></div>
                 <label>日付<input type="date" id="workoutDate" /></label>
                 <div class="ex-search">
                   <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
@@ -549,11 +531,11 @@
 
               <div class="workout-side">
                 <div class="panel">
-                  <div class="panel-head"><span class="panel-label">SESSION // 記録待ち</span><button type="button" class="small-btn" id="saveAllPendingButton">すべて記録</button></div>
+                  <div class="panel-head"><span class="panel-label">記録待ち</span><button type="button" class="small-btn" id="saveAllPendingButton">すべて記録</button></div>
                   <div id="pendingList" class="list-area"></div>
                 </div>
                 <div class="panel">
-                  <div class="panel-head"><span class="panel-label">RECENT // 筋トレ</span><span class="dot"></span></div>
+                  <div class="panel-head"><span class="panel-label">最近の筋トレ</span><span class="dot"></span></div>
                   <div id="latestWorkouts" class="list-area"></div>
                 </div>
               </div>
@@ -609,8 +591,8 @@
             </div>
 
             <div class="panel feedback-card">
-              <div class="panel-head"><span class="panel-label">REVIEW // 本日の所見</span><span class="dot"></span></div>
-              <button class="primary-btn" id="generateFeedbackButton">所見を生成</button>
+              <div class="panel-head"><span class="panel-label">今日のひとこと</span><span class="dot"></span></div>
+              <button class="primary-btn" id="generateFeedbackButton">ひとことを生成</button>
               <div id="feedbackBox" class="feedback-box">記録をもとに、コンディションの所見を表示します。</div>
             </div>
           </div>
@@ -626,7 +608,7 @@
 
             <div class="content-grid">
               <div class="panel">
-                <div class="panel-head"><span class="panel-label">NEW POST</span></div>
+                <div class="panel-head"><span class="panel-label">新規投稿</span></div>
                 <label>名前<input type="text" id="postName" placeholder="横井" /></label>
                 <label>カテゴリ
                   <select id="postCategory">
@@ -641,7 +623,7 @@
               </div>
 
               <div class="panel">
-                <div class="panel-head"><span class="panel-label">FEED</span><span class="dot"></span></div>
+                <div class="panel-head"><span class="panel-label">みんなの投稿</span><span class="dot"></span></div>
                 <div id="postList" class="list-area"></div>
               </div>
             </div>
@@ -652,18 +634,18 @@
         <section id="settingsScreen" class="screen">
           <div class="page-layout">
             <div class="page-header">
-              <div class="page-title"><p class="eyebrow">SETTINGS / DATA</p><h2>設定・データ管理</h2></div>
+              <div class="page-title"><p class="eyebrow">設定</p><h2>設定・データ管理</h2></div>
               <button class="secondary-btn" data-go="homeScreen">ホームへ戻る</button>
             </div>
 
             <div class="panel">
-              <div class="panel-head"><span class="panel-label">ACCOUNT</span><svg class="icon panel-ico"><use href="#i-user" /></svg></div>
+              <div class="panel-head"><span class="panel-label">アカウント</span><svg class="icon panel-ico"><use href="#i-user" /></svg></div>
               <div class="settings-rows">
                 <div><span>名前</span><strong id="settingsName">—</strong></div>
                 <div><span>メール</span><strong id="settingsEmail">—</strong></div>
                 <div><span>登録日時</span><strong id="settingsCreated">—</strong></div>
                 <div><span>食事記録</span><strong id="settingsMealCount">0件</strong></div>
-                <div><span>筋トレ記録</span><strong id="settingsWorkoutCount">0件</strong></div>
+                <div><span>筋トレ<i class="lx">記録</i></span><strong id="settingsWorkoutCount">0件</strong></div>
               </div>
               <div class="action-row">
                 <button class="secondary-btn" id="logoutButton">ログアウト</button>
@@ -671,7 +653,7 @@
             </div>
 
             <div class="panel">
-              <div class="panel-head"><span class="panel-label">DATA // ローカルファイル</span></div>
+              <div class="panel-head"><span class="panel-label">データ書き出し・読み込み</span></div>
               <p class="lead">記録をローカルファイルに書き出し／読み込みできます（バックアップ・研究用ログ）。</p>
               <div class="action-row">
                 <button class="secondary-btn" id="exportDataButton">JSONで書き出し</button>
@@ -681,7 +663,7 @@
             </div>
 
             <div class="panel danger-panel">
-              <div class="panel-head"><span class="panel-label">DANGER ZONE</span><span class="soon-tag">取り扱い注意</span></div>
+              <div class="panel-head"><span class="panel-label">データの削除</span><span class="soon-tag">取り扱い注意</span></div>
               <p class="lead">この操作は元に戻せません。実行前に必要ならデータを書き出してください。</p>
               <div class="action-row">
                 <button class="secondary-btn danger-btn" id="deleteDataButton">記録データを削除</button>
@@ -697,7 +679,7 @@
           <div class="page-layout">
             <div class="page-header admin-header">
               <div class="page-title">
-                <p class="eyebrow">RESEARCH // ADMIN</p>
+                <p class="eyebrow">研究用・管理者</p>
                 <h2>データ管理（研究用）</h2>
               </div>
               <div class="admin-actions">
@@ -715,9 +697,9 @@
             <div class="tele-stats admin-kpi" id="adminStats"></div>
 
             <div class="panel">
-              <div class="panel-head"><span class="panel-label">ACCOUNTS // 全ユーザー</span><span class="mini-count" id="adminUserCount"></span></div>
+              <div class="panel-head"><span class="panel-label">全ユーザー</span><span class="mini-count" id="adminUserCount"></span></div>
               <label class="admin-search">
-                <span class="panel-label">SEARCH</span>
+                <span class="panel-label">検索</span>
                 <input type="search" id="adminSearch" placeholder="名前・メールで検索" autocomplete="off" />
               </label>
               <div id="adminUserList" class="admin-users"></div>
@@ -727,10 +709,6 @@
       </main>
     </div>
 
-    <footer class="app-footer">
-      <span class="foot-code">PHYSIQUE OS</span>
-      <span class="foot-note">research prototype · 見た目の変化を軸にした体型改善支援 · logs stored locally</span>
-    </footer>
   </div>
 
   <script src="exercises.js"></script>
@@ -740,7 +718,7 @@
     <div class="ex-modal-card food-modal-card">
       <button type="button" class="ex-ic ex-modal-close" id="foodModalClose" aria-label="閉じる"><svg class="icon"><use href="#i-close" /></svg></button>
       <div class="food-modal-head">
-        <span class="food-modal-kicker">FOOD DATABASE</span>
+        <span class="food-modal-kicker">食品データベース</span>
         <h3 id="foodModalTitle">食品を追加</h3>
       </div>
       <div class="food-search-wrap">
